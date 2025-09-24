@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Chat</title>
+</head>
+<body>
+    <h2>Send Google Chat Message</h2>
+
+    {% if error %}
+      <p style="color:red">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+      <p style="color:green">{{ success }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label>Select a Chat Space:</label>
+        <select name="space_id">
+            <option value="">-- Choose a space (optional) --</option>
+            {% for space in spaces %}
+              <option value="{{ space.id }}">
+    {{ space.display_name }} ({{ space.type }})
+</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label>Or enter recipient email:</label>
+        <input type="email" name="recipient_email" placeholder="user@dlsu.edu.ph"><br><br>
+
+        <label>Message:</label><br>
+        <textarea name="message" rows="4" cols="40" required></textarea><br><br>
+
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>
