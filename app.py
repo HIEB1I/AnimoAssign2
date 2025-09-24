@@ -26,7 +26,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile'
 ]
 
-CLIENT_SECRET_FILE = "client_secret_455672992695-0n009b08acc3nu49s04321b9u6opmgf6.apps.googleusercontent.com.json"
+CLIENT_SECRET_FILE = "" # path to your client_secret.json
 REDIRECT_URI = "http://localhost:5000/oauth2callback"
 
 # --- Helper functions ---
