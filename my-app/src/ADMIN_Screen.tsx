@@ -77,7 +77,7 @@ function Dropdown({
             <button key={opt} role="option" aria-selected={value === opt}
               onMouseEnter={() => setHover(i)}
               onClick={() => { onChange(opt); setOpen(false); btnRef.current?.focus(); }}
-              className={cls("block w-full text-left px-4 py-3 text-lg", i === hover && "bg-emerald-50")}
+              className={cls("block w-full text-left px-4 py-3 text-sm", i === hover && "bg-emerald-50")}
             >{opt}</button>
           ))}
         </div>
