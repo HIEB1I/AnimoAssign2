@@ -5,17 +5,22 @@ import Login from "./Login";
 // pages
 import ADMIN_Screen from "./ADMIN_Screen";
 import ADMIN_Inbox from "./ADMIN_Inbox";
+import STUDENT_Screen from "./STUDENT_Screen";
+
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/admin/screen" replace />} />
+        <Route path="/" element={<Navigate to="/student/screen" replace />} />
 
         {/* Admin routes */}
         <Route path="/admin/screen" element={<ADMIN_Screen />} />
         <Route path="/admin/inbox" element={<ADMIN_Inbox />} />
+
+        {/* Student routes */}
+        <Route path="/student/screen" element={<STUDENT_Screen />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
