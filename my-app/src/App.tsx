@@ -7,6 +7,7 @@ import ADMIN_Screen from "./ADMIN_Screen";
 import ADMIN_Inbox from "./ADMIN_Inbox";
 import STUDENT_Screen from "./STUDENT_Screen";
 import FAC_Overview from "./FAC_Overview"; 
+import FAC_History from "./FAC_History"; 
 
 export default function App() {
   return (
