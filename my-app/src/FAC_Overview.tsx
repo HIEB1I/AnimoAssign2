@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HistoryMain from "./FAC_History";
+import PreferencesContent from "./FAC_Preferences";
 import {
   Send as SendIcon,
   Bell,
@@ -505,13 +506,8 @@ export default function FAC_Overview() {
 
       {tab === "History" && <HistoryMain />}
 
-      {tab === "Preferences" && (
-        <section className="mx-auto w-full max-w-screen-2xl px-4">
-          <div className="rounded-xl border border-neutral-200 bg-white p-5 text-sm text-neutral-600">
-            Preferences coming soon…
-          </div>
-        </section>
-      )}
+      {tab === "Preferences" && <PreferencesContent />}
+
 
       <div className="h-10" />
     </div>
