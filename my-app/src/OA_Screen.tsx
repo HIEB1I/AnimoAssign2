@@ -53,8 +53,8 @@ function TopBar() {
                 <UserCircle className="h-6 w-6" />
               </span>
               <span className="leading-tight text-left">
-                <div className="text-[17px] font-semibold">Monica Santiago</div>
-                <div className="text-[12px] opacity-90">Student</div>
+                <div className="text-[17px] font-semibold">Felinor Hortinela-Robles</div>
+                <div className="text-[12px] opacity-90">Office Assistant | Department of Information Technology</div>
               </span>
             </button>
 

@@ -8,7 +8,10 @@ import ADMIN_Inbox from "./ADMIN_Inbox";
 import STUDENT_Screen from "./STUDENT_Screen";
 import APO_PreEnlistment from "./APO_PreEnlistment";
 import APO_CourseOfferings from "./APO_CourseOfferings";
-
+import APO_RoomAllocation from "./APO_RoomAllocation";
+import OA_Screen from "./OA_Screen";
+import DEAN_Screen from "./DEAN_Screen";
+import PROVOST_Screen from "./PROVOST_Screen";
 
 import FAC_Overview from "./FAC_Overview"; 
 import FAC_History from "./FAC_History"; 
@@ -18,9 +21,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/apo/screen" replace />} />
-        {/* Default redirect -> FAC_Overview */}
-        <Route path="/" element={<Navigate to="/faculty/overview" replace />} />
+        <Route path="/" element={<Navigate to="/apo/preenlistment" replace />} />
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
@@ -40,6 +41,16 @@ export default function App() {
         {/* APO routes */}
         <Route path="/apo/preenlistment" element={<APO_PreEnlistment />} />
         <Route path="/apo/courseofferings" element={<APO_CourseOfferings />} />
+        <Route path="/apo/roomallocation" element={<APO_RoomAllocation />} />
+        
+        {/* Office Assistant routes */}
+        <Route path="/officeassistant/screen" element={<OA_Screen />} />
+        
+        {/* Dean routes */}
+        <Route path="/dean/screen" element={<DEAN_Screen />} />
+        
+        {/* Provost routes */}
+        <Route path="/provost/screen" element={<PROVOST_Screen />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
