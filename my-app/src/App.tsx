@@ -6,6 +6,9 @@ import Login from "./Login";
 import ADMIN_Screen from "./ADMIN_Screen";
 import ADMIN_Inbox from "./ADMIN_Inbox";
 import STUDENT_Screen from "./STUDENT_Screen";
+import APO_PreEnlistment from "./APO_PreEnlistment";
+import APO_CourseOfferings from "./APO_CourseOfferings";
+
 
 
 export default function App() {
@@ -13,7 +16,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/student/screen" replace />} />
+        <Route path="/" element={<Navigate to="/apo/screen" replace />} />
 
         {/* Admin routes */}
         <Route path="/admin/screen" element={<ADMIN_Screen />} />
@@ -21,6 +24,10 @@ export default function App() {
 
         {/* Student routes */}
         <Route path="/student/screen" element={<STUDENT_Screen />} />
+
+        {/* APO routes */}
+        <Route path="/apo/preenlistment" element={<APO_PreEnlistment />} />
+        <Route path="/apo/courseofferings" element={<APO_CourseOfferings />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
