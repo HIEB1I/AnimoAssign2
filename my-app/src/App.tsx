@@ -14,7 +14,6 @@ import DEAN_Screen from "./DEAN_Screen";
 import PROVOST_Screen from "./PROVOST_Screen";
 
 import FAC_Overview from "./FAC_Overview"; 
-import FAC_History from "./FAC_History"; 
 
 export default function App() {
   return (
