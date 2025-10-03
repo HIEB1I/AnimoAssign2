@@ -7,14 +7,13 @@ import ADMIN_Screen from "./ADMIN_Screen";
 import ADMIN_Inbox from "./ADMIN_Inbox";
 import STUDENT_Screen from "./STUDENT_Screen";
 import FAC_Overview from "./FAC_Overview"; 
-import FAC_History from "./FAC_History"; 
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Default redirect -> FAC_Overview */}
-        <Route path="/" element={<Navigate to="/faculty/overview" replace />} />
+        <Route path="/" element={<Navigate to="/admin/screen" replace />} />
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
