@@ -11,11 +11,12 @@ import {
   Clock,
   MapPin,
   Check,
+  CheckCheck,
   BookOpen,
   Search,
-  Send,
   Building2,
   ChevronDown,
+  Upload
 } from "lucide-react";
 
 /* ----------------------- Utilities ----------------------- */
@@ -67,8 +68,8 @@ type Course = {
     | "Department of Software Technology"
     | "Department of Computer Technology"
     | "Department of Information Technology";
-  ids: string[]; // e.g. ["ID 122"]
-  programs: string[]; // e.g. ["BSIT","BSCS-ST"]
+  ids: string[];
+  programs: string[]; 
   sections: SectionRow[];
 };
 
@@ -91,8 +92,10 @@ const tagColor = (t: string) => {
     "BSCS-NIS": "bg-pink-100 text-pink-700",
     "BSCS-CSE": "bg-pink-100 text-pink-700",
     "BSMS-CS": "bg-pink-100 text-pink-700",
-    BSIT: "bg-pink-100 text-pink-700",
-    BSIS: "bg-pink-100 text-pink-700",
+    "BS IET-GD": "bg-pink-100 text-pink-700",
+    "BS IET-AD": "bg-pink-100 text-pink-700",
+    "BSIT": "bg-pink-100 text-pink-700",
+    "BSIS": "bg-pink-100 text-pink-700",
     Unassigned: "bg-red-100 text-red-700",
   };
   return map[t] || "bg-gray-100 text-gray-700";
@@ -448,7 +451,7 @@ function AddCoursePanel({
         />
         <MultiSelect
           label="Program"
-          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS"]}
+          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS", "BS IET-GD", "BS IET-AD"]}
           value={data.programs}
           onChange={(vals) => setData({ ...data, programs: vals })}
           placeholder="Choose Program(s)"
@@ -540,7 +543,7 @@ function EditCoursePanel({
         />
         <MultiSelect
           label="Program"
-          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS"]}
+          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS", "BS IET-GD", "BS IET-AD"]}
           value={programs}
           onChange={setPrograms}
           placeholder="Choose Program(s)"
@@ -598,7 +601,7 @@ function CourseCard({
     if (sections !== course.sections) {
       onUpdateCourse({ ...course, sections });
     }
-  }, [sections]); // eslint-disable-line
+  }, [sections]); 
 
   // ---- BUSY REPORTING (local -> parent) ----
   const localBusy = editingCourse || adding || editingIndex !== null || showDelete;
@@ -648,9 +651,9 @@ function CourseCard({
     setDeleteIndex(null);
   };
 
-  // FIXED auto-increment
-const handleAddSection = () => {
-  if (globalBusy) return;
+  // auto-increment
+  const handleAddSection = () => {
+    if (globalBusy) return;
 
   const sectionNums = sections
     .map((s) => {
@@ -660,7 +663,8 @@ const handleAddSection = () => {
     })
     .filter((n): n is number => n !== null);
 
-  const nextNum = sectionNums.length ? Math.max(...sectionNums) + 1 : 1;
+  const baseNum = 11; // starting section number
+  const nextNum = sectionNums.length ? Math.max(...sectionNums) + 1 : baseNum;
   const nextCode = `S${nextNum}`;
 
   // create a fresh row
@@ -670,10 +674,10 @@ const handleAddSection = () => {
   copy[2] = nextCode;
   copy[3] = "Unassigned";   // default faculty
 
-  // 👇 immediately add to sections
+  // immediately add to sections
   setSections((prev) => [...prev, copy]);
 
-  // 👇 and put into edit mode right away
+  // and put into edit mode right away
   setEditingIndex(sections.length); // new row index
   setEditRowDraft(toEditable(copy));
 };
@@ -887,6 +891,7 @@ const WorkflowChips = () => {
   const chips = [
     "APO",
     "Office Manager",
+    "APO",
     "Office Assistant",
     "Department Chair",
     "Dean",
@@ -910,6 +915,46 @@ const WorkflowChips = () => {
   );
 };
 
+// --- Simple CSV parser that respects quotes and newlines ---
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '"') {
+      if (inQuotes && next === '"') { // escaped quote ""
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && next === '\n') i++; // handle CRLF
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell.length || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows
+    .map(r => r.map(c => c.trim()))
+    .filter(r => r.some(c => c !== "")); // drop empty lines
+}
+
 /* ----------------------- Page ----------------------- */
 export default function CourseOfferingsScreen() {
   const [search, setSearch] = useState("");
@@ -917,95 +962,45 @@ export default function CourseOfferingsScreen() {
   const [department, setDepartment] = useState("All Departments");
   const [program, setProgram] = useState("All Programs");
   const [idFilter, setIdFilter] = useState("All ID");
-  const [showForward, setShowForward] = useState(false);
+  const [showApprove, setShowApprove] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
 
-  /* seed courses in structured shape (13 fields per section) */
-  const [courses, setCourses] = useState<Course[]>([
-    {
-      code: "CCPROG3",
-      title: "Object-Oriented Programming",
-      level: "Undergraduate",
-      department: "Department of Software Technology",
-      ids: ["ID 122"],
-      programs: ["BSCS-ST", "BSCS-NIS"],
-      sections: [
-        [
-          "Object-Oriented Programming",
-          "3",
-          "S11",
-          "LIM-CHENG, NATHALIE ROSE",
-          "M",
-          "0730",
-          "0900",
-          "ONLINE",
-          "H",
-          "0730",
-          "0900",
-          "GK306A",
-          "20",
-        ],
-        [
-          "Object-Oriented Programming",
-          "3",
-          "S12",
-          "CABREDO, RAFAEL ANGISCO",
-          "S",
-          "0730",
-          "0900",
-          "ONLINE",
-          "S",
-          "0915",
-          "1045",
-          "—",
-          "20",
-        ],
-        [
-          "Object-Oriented Programming",
-          "3",
-          "S13",
-          "Unassigned",
-          "T",
-          "0730",
-          "0900",
-          "ONLINE",
-          "F",
-          "0915",
-          "1045",
-          "GK306B",
-          "20",
-        ],
-        [
-          "Object-Oriented Programming",
-          "3",
-          "XX22",
-          "ENCARNACION, ALAN LIZARDO",
-          "M",
-          "0730",
-          "0900",
-          "ONLINE",
-          "M",
-          "0915",
-          "1045",
-          "—",
-          "20",
-        ],
-      ],
-    },
-  ]);
+ const filteredCourses = courses.filter((c) => {
+  const q = search.toLowerCase();
 
-  const filteredCourses = courses.filter((c) => {
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      c.code.toLowerCase().includes(q) ||
-      c.title.toLowerCase().includes(q) ||
-      c.sections.some((s) => (s[3] || "").toLowerCase().includes(q)); // faculty index 3
-    const matchesLevel = level === "All Levels" || c.level === level;
-    const matchesDept = department === "All Departments" || c.department === department;
-    const matchesId = idFilter === "All ID" || c.ids.includes(idFilter);
-    const matchesProgram = program === "All Programs" || c.programs.includes(program);
-    return matchesSearch && matchesLevel && matchesDept && matchesId && matchesProgram;
-  });
+  const matchesSearch =
+    !q ||
+    // ---- Course-level fields ----
+    c.code.toLowerCase().includes(q) ||
+    c.title.toLowerCase().includes(q) ||
+    c.level.toLowerCase().includes(q) ||
+    c.department.toLowerCase().includes(q) ||
+    c.ids.some((id) => id.toLowerCase().includes(q)) ||
+    c.programs.some((p) => p.toLowerCase().includes(q)) ||
+    // ---- Section-level fields ----
+    c.sections.some((s) =>
+      [
+        s[2], // Section code (e.g. S11)
+        s[3], // Faculty
+        s[4], s[5], s[6], // Day 1, Begin 1, End 1
+        s[7], // Room 1
+        s[8], s[9], s[10], // Day 2, Begin 2, End 2
+        s[11], // Room 2
+        s[12], // Capacity
+        fmtTime(s[5]), fmtTime(s[6]), fmtTime(s[9]), fmtTime(s[10]), // formatted times like 07:30
+      ]
+        .filter(Boolean)
+        .some((v) => v.toLowerCase().includes(q))
+    );
+
+  // ---- Filter dropdown matches ----
+  const matchesLevel = level === "All Levels" || c.level === level;
+  const matchesDept = department === "All Departments" || c.department === department;
+  const matchesId = idFilter === "All ID" || c.ids.includes(idFilter);
+  const matchesProgram = program === "All Programs" || c.programs.includes(program);
+
+  return matchesSearch && matchesLevel && matchesDept && matchesId && matchesProgram;
+});
 
   const updateCourse = (updated: Course) =>
     setCourses((prev) => prev.map((c) => (c.code === updated.code ? updated : c)));
@@ -1026,6 +1021,97 @@ export default function CourseOfferingsScreen() {
   // Busy if adding course OR a course edit is open OR any card reported busy
   const busy =
     addingCourse || editingCourseCode !== null || Object.values(busyByCourse).some(Boolean);
+
+ const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const text = (event.target?.result as string) ?? "";
+    const rows = parseCSV(text);
+    if (!rows.length) return;
+
+    // headers (case-insensitive) + strip BOM from first header if present
+    const headerRow = rows[0].map((h, idx) =>
+      idx === 0 ? h.replace(/^\uFEFF/, "").toLowerCase() : h.toLowerCase()
+    );
+    const dataRows = rows.slice(1);
+
+    const idxOf = (key: string) => headerRow.indexOf(key.toLowerCase());
+    const get = (cols: string[], key: string) => {
+      const i = idxOf(key);
+      if (i === -1) return "";
+      return cols[i] ?? "";
+    };
+
+    const courseMap: Record<string, Course> = {};
+    const baseSectionNum = 11;
+
+    for (const cols of dataRows) {
+      const code = get(cols, "course code");
+      const title = get(cols, "course title");
+      if (!code || !title) continue;
+
+      const level = (get(cols, "levels") || "Undergraduate") as Course["level"];
+      const dept =
+        (get(cols, "departments") || "Department of Software Technology") as Course["department"];
+      const id = get(cols, "id") || "Unassigned";
+      const program = get(cols, "program") || "Unassigned";
+
+      // init course
+      if (!courseMap[code]) {
+        courseMap[code] = {
+          code,
+          title,
+          level,
+          department: dept,
+          ids: [],
+          programs: [],
+          sections: [],
+        };
+      }
+      const course = courseMap[code];
+      if (id && !course.ids.includes(id)) course.ids.push(id);
+      if (program && !course.programs.includes(program)) course.programs.push(program);
+
+      // read faculty & schedule safely (commas inside quotes OK)
+      const faculty = get(cols, "faculty") || "Unassigned";
+      const day1   = get(cols, "day 1");
+      const b1     = get(cols, "begin 1");
+      const e1     = get(cols, "end 1");
+      const day2   = get(cols, "day 2");
+      const b2     = get(cols, "begin 2");
+      const e2     = get(cols, "end 2");
+      const room1 = get(cols, "room 1") || "ONLINE"; 
+      const room2 = get(cols, "room 2") || "";       
+      const cap    = get(cols, "capacity") || "40";
+
+      // section code (S11, S12, ...)
+      const sectionNum = baseSectionNum + course.sections.length;
+      const sectionCode = `S${sectionNum}`;
+
+      const newSection: SectionRow = [
+        title,          // 0 Course Title
+        "3",            // 1 Units (default)
+        sectionCode,    // 2 Section
+        faculty,        // 3 Faculty
+        day1, b1, e1,   // 4–6 Day1
+        room1,          // 7 Room1
+        day2, b2, e2,   // 8–10 Day2
+        room2 || "",    // 11 Room2 (optional)
+        cap             // 12 Capacity
+      ];
+
+      course.sections.push(newSection);
+    }
+
+    setCourses(Object.values(courseMap));
+    alert("Import complete: faculty & schedules are now placed in the correct columns.");
+  };
+
+  reader.readAsText(file);
+};
 
   return (
     <div className="min-h-screen w-full bg-gray-50 text-slate-900">
@@ -1089,26 +1175,40 @@ export default function CourseOfferingsScreen() {
           />
 
           <button
-            onClick={() => setShowForward(true)}
+            onClick={() => setShowApprove(true)}
             disabled={busy}
             className={cls(
               "ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110",
               busy && "opacity-50 cursor-not-allowed hover:brightness-100"
             )}
-            title={busy ? "Finish current action first" : "Forward"}
+            title={busy ? "Finish current action first" : "Approve"}
           >
-            <Send className="h-4 w-4" />
-            Forward
+            <CheckCheck className="h-4 w-4" />
+            Approve
           </button>
         </div>
 
         <div className="rounded-xl bg-white shadow-sm border border-gray-200 p-6 w-full">
-          {/* header row */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-bold">Course Offerings</h2>
-              <p className="text-sm text-gray-500">Term 1 AY 2025-2026</p>
-            </div>
+        {/* header row */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold">Course Offerings</h2>
+            <p className="text-sm text-gray-500">Term 1 AY 2025-2026</p>
+          </div>
+
+          {/* --- Import CSV button --- */}
+          <div>
+            <label className="cursor-pointer inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110">
+              <Upload className="h-4 w-4" />
+              Import CSV
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+            </label>
+          </div>
           </div>
 
           {/* workflow chips */}
@@ -1133,8 +1233,8 @@ export default function CourseOfferingsScreen() {
             ))}
           </div>
 
-          {/* Forward confirmation modal */}
-          {showForward && (
+          {/* Approve confirmation modal */}
+          {showApprove && (
             <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
               <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
                 <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
@@ -1142,22 +1242,22 @@ export default function CourseOfferingsScreen() {
                 </div>
                 <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
                 <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
-                  Please confirm that this is the final version of the faculty load to be submitted to the
+                  Please confirm that this is the final Course Offerings to be submitted to the
                   {" "}
-                  <span className="font-semibold">Office Manager</span>. Once submitted, this action cannot be undone and the button will be disabled.
+                  <span className="font-semibold">Office Manager</span> for faculty loading. Once submitted, this action cannot be undone and the button will be disabled.
                 </p>
                 <div className="flex justify-end gap-2">
                   <button
-                    onClick={() => setShowForward(false)}
+                    onClick={() => setShowApprove(false)}
                     className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => setShowForward(false)}
+                    onClick={() => setShowApprove(false)}
                     className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                   >
-                    Forward
+                    Yes, I Approve
                   </button>
                 </div>
               </div>

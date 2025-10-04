@@ -236,7 +236,7 @@ export default function APO_PreEnlistment() {
             <section className="flex-1 max-h-[400px] overflow-y-auto pr-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">List of Enlisted Courses</h2>
-                <label className="flex items-center gap-2 cursor-pointer text-emerald-700 text-sm font-medium">
+                <label className="ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
                   <Upload className="h-4 w-4" />
                   Import CSV
                   <input
@@ -315,7 +315,7 @@ export default function APO_PreEnlistment() {
             <section className="flex-1 max-h-[400px] overflow-y-auto pl-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Enrollment Statistics</h2>
-                <label className="flex items-center gap-2 cursor-pointer text-emerald-700 text-sm font-medium">
+                <label className="ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
                   <Upload className="h-4 w-4" />
                   Import CSV
                   <input
