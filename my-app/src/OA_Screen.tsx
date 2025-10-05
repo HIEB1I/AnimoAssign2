@@ -1,60 +1,124 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  UserCircle, 
-  LogOut, 
-  Calendar } 
-from "lucide-react";
+import {
+  UserCircle,
+  LogOut,
+  Inbox,
+  Bell,
+  CheckCheck,
+  Send,
+  Check,
+  X
+} from "lucide-react";
+
+/* ----------------------- Utilities ----------------------- */
+const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
+
+/* ----------------------- Notifications Data ----------------------- */
+type Notification = { id: number; title: string; details: string; time: Date; seen?: boolean };
+
+const INITIAL_NOTIFS: Notification[] = [
+  {
+    id: 1,
+    title: "Department Chair approved the Faculty Plantilla",
+    details: "The Dean has been notified for final review.",
+    time: new Date(Date.now() - 2 * 60 * 1000),
+    seen: false,
+  },
+  {
+    id: 2,
+    title: "Provost feedback received",
+    details: "A note was added to the 2025-2026 1st Term plantilla.",
+    time: new Date(Date.now() - 15 * 60 * 1000),
+    seen: false,
+  },
+  {
+    id: 3,
+    title: "New schedule update available",
+    details: "Please check the final IT course timetable revision.",
+    time: new Date(Date.now() - 60 * 60 * 1000),
+    seen: false,
+  },
+];
 
 /* ----------------------- Top Bar ----------------------- */
 function TopBar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFS);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const notifRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
 
+  // Close menus on outside click
   useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+    const handleClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Header height CSS variable
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
-    const setVar = () =>
+    const setHeightVar = () =>
       document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
-    setVar();
-    const ro = new ResizeObserver(setVar);
+    setHeightVar();
+    const ro = new ResizeObserver(setHeightVar);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  // Logout
   const logout = () => {
     localStorage.removeItem("authToken");
     sessionStorage.clear();
     navigate("/login");
   };
 
+  // Notifications time-ago formatter
+  const timeAgo = (date: Date) => {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const hasUnseen = notifications.some((n) => !n.seen);
+  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
+
+  // Handle opening notifications (mark as seen)
+  const handleToggleNotif = () => {
+    setNotifOpen((o) => !o);
+    if (!notifOpen) {
+      // Mark all as seen when opened
+      setNotifications((prev) => prev.map((n) => ({ ...n, seen: true })));
+    }
+  };
+
   return (
     <header className="sticky top-0 z-[80]" ref={headerRef}>
-      <div className="w-full border-b border-emerald-900/30 bg-gradient-to-r from-emerald-800 via-emerald-700 to-green-600">
-        <div className="mx-auto flex w-full items-center justify-between px-5 py-4 text-white">
+      <div className="w-full border-b border-emerald-900/30 bg-gradient-to-r from-emerald-800 via-emerald-700 to-green-600 text-white">
+        <div className="mx-auto flex w-full items-center justify-between px-5 py-4">
+          {/* Profile Button */}
           <div ref={wrapperRef} className="relative">
             <button
-              onClick={() => setMenuOpen((o: boolean) => !o)}
+              onClick={() => setMenuOpen((o) => !o)}
               className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-white/10"
             >
               <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20">
                 <UserCircle className="h-6 w-6" />
               </span>
               <span className="leading-tight text-left">
-                <div className="text-[17px] font-semibold">Felinor Hortinela-Robles</div>
-                <div className="text-[12px] opacity-90">Office Assistant | Department of Information Technology</div>
+                <div className="text-[17px] font-semibold">Felinor Hortinela</div>
+                <div className="text-[12px] opacity-90">
+                  Office Assistant | Department of Information Technology
+                </div>
               </span>
             </button>
 
@@ -74,6 +138,54 @@ function TopBar() {
               </div>
             )}
           </div>
+
+          {/* Inbox + Notifications */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/officeassistant/inbox")}
+              className="rounded-md p-2 hover:bg-white/15"
+              title="Inbox"
+            >
+              <Inbox className="h-5 w-5" />
+            </button>
+
+            {/* Notifications */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={handleToggleNotif}
+                className="relative rounded-md p-2 hover:bg-white/15"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {hasUnseen && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
+                  <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">
+                    Notifications
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {sortedNotifs.length ? (
+                      sortedNotifs.map((n) => (
+                        <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
+                          <div className="font-semibold text-slate-900">{n.title}</div>
+                          <div className="text-sm text-gray-600">{n.details}</div>
+                          <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-sm text-gray-500">
+                        No notifications
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="h-[2px] w-full bg-neutral-200/80" />
       </div>
@@ -81,335 +193,349 @@ function TopBar() {
   );
 }
 
-/* ----------------------- SelectBox ----------------------- */
-function SelectBox({
-  label,
-  value,
-  onChange,
-  options,
-  disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState(Math.max(0, options.findIndex((o) => o === value)));
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (
-        open &&
-        !btnRef.current?.contains(e.target as Node) &&
-        !listRef.current?.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  const cx = (...s: Array<string | false | undefined>) => s.filter(Boolean).join(" ");
-
+/* ----------------------- Workflow Chips ----------------------- */
+const WorkflowChips = () => {
+  const steps = [
+    "APO",
+    "Office Manager",
+    "APO",
+    "Office Assistant",
+    "Department Chair",
+    "Dean",
+    "Office Assistant",
+    "Provost",
+  ];
   return (
-    <div className="relative">
-      <label className="block text-sm font-semibold text-emerald-700 mb-1">{label}</label>
-      <button
-        ref={btnRef}
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => !disabled && setOpen((v) => !v)}
-        disabled={disabled}
-        className={cx(
-          "w-full rounded-xl border px-3 py-2 text-left text-sm outline-none",
-          disabled
-            ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "border-gray-300 bg-white pr-9 focus:ring-2 focus:ring-emerald-500/30"
-        )}
-      >
-        <span className={cx(!value && "text-gray-400")}>
-          {value || "-- Select an option --"}
-        </span>
-        {!disabled && <span className="pointer-events-none absolute right-3 top-[38px]">▾</span>}
-      </button>
-
-      {open && !disabled && (
-        <div
-          ref={listRef}
-          role="listbox"
-          className="absolute z-20 mt-2 w-full max-h-64 overflow-auto rounded-2xl border border-emerald-200 bg-white shadow-lg"
-        >
-          {options.map((opt, i) => (
-            <button
-              key={opt}
-              role="option"
-              onMouseEnter={() => setHover(i)}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-                btnRef.current?.focus();
-              }}
-              className={cx(
-                "block w-full px-4 py-2 text-left text-sm",
-                hover === i && "bg-emerald-50",
-                value === opt && "bg-emerald-100 text-emerald-800 font-medium"
-              )}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ----------------------- Petition Status Card ----------------------- */
-function StatusCard({
-  code,
-  title,
-  submitted,
-  reason,
-  status,
-}: {
-  code: string;
-  title: string;
-  submitted: string;
-  reason: string;
-  status: string;
-}) {
-  const statusColors: Record<string, string> = {
-    "New Class Opened": "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    "Slots Increased": "bg-amber-50 text-amber-700 border border-amber-200",
-    "Less than Minimum": "bg-red-50 text-red-700 border border-red-200",
-  };
-
-  return (
-    <div className="relative rounded-xl border border-gray-300 bg-white p-4 shadow-sm mb-4 overflow-hidden">
-      <div className="absolute left-0 top-0 h-full w-1.5 bg-emerald-600 rounded-l-xl"></div>
-
-      <div className="relative z-10 pl-4">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-semibold text-emerald-700">{code}</h3>
+    <div className="flex flex-wrap items-center gap-2 mt-3">
+      {steps.map((step, i) => (
+        <React.Fragment key={step}>
           <span
-            className={`px-3 py-1 text-xs rounded-full font-medium ${
-              statusColors[status] || "bg-gray-100 text-gray-600"
-            }`}
+            className={cls(
+              "rounded-full px-3 py-1 text-[13px] font-medium border",
+              step === "Office Assistant"
+                ? "border-emerald-700 bg-emerald-700 text-white"
+                : "border-gray-300 bg-white text-gray-800"
+            )}
           >
-            {status}
+            {step}
           </span>
-        </div>
-        <div className="text-sm text-gray-600">{title}</div>
-        <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="h-4 w-4" />
-          Submitted: {submitted}
-        </div>
-        <div className="mt-2 text-sm bg-gray-100 rounded-md px-2 py-1">
-          <span className="font-medium">Reason:</span> {reason}
-        </div>
-      </div>
+          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
+        </React.Fragment>
+      ))}
     </div>
   );
-}
+};
 
-/* ----------------------- Page ----------------------- */
-export default function STUDENT_Screen() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [idNumber, setIdNumber] = useState("");
-  const [degree, setDegree] = useState("");
-  const [dept, setDept] = useState("");
-  const [course, setCourse] = useState("");
-  const [reason, setReason] = useState("");
-  const [petitions, setPetitions] = useState<
-    { code: string; title: string; submitted: string; reason: string; status: string }[]
-  >([
-    {
-      code: "STCLOUD",
-      title: "Cloud Computing",
-      submitted: "08/24/2025",
-      reason: "Schedule Conflicts",
-      status: "New Class Opened",
-    },
-    {
-      code: "CCPROG3",
-      title: "Object-Oriented Programming",
-      submitted: "08/21/2025",
-      reason: "Out of Slots",
-      status: "Slots Increased",
-    },
-  ]);
-  const [error, setError] = useState("");
+/* ----------------------- Office Assistant Screen ----------------------- */
+export default function OfficeAssistant_Plantilla() {
+  const [showApprovePrompt, setShowApprovePrompt] = useState(false);
+  const [showMessagePrompt, setShowMessagePrompt] = useState(false);
+  const [to, setTo] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const plantillaFile = "Faculty_Plantilla_CCS_IT_AY2025-2026_1stTerm.pdf";
 
-  // Course options by department
-  const courseOptions: Record<string, string[]> = {
-    "Department of Software Technology": ["AD-FUND", "AD-MOVE", "ADCHR-1", "ADCON-1"],
-    "Department of Computer Technology": ["CCICOMP", "CE-MATH", "CSARCH2", "LBYARCH"],
-    "Department of Information Technology": ["CAP-IS1", "CAPIT0A", "CAPIT0B", "CCAPDEV"],
+  const handleApprove = () => {
+    setShowApprovePrompt(false);
+    alert("✅ Faculty Plantilla successfully approved and forwarded!");
   };
 
-  const reasons = ["Out of Slots", "Schedule Conflict"];
+  const handleViewPlantilla = () => {
+    const plantillaElement = document.querySelector("table");
+    if (!plantillaElement) return alert("No plantilla found on screen!");
 
-  const handleSubmit = () => {
-    if (!firstName || !lastName || !idNumber || !degree || !dept || !course || !reason) {
-      setError("⚠ Please fill out all fields.");
-      return;
+    // Open a new window with the same content
+    const newWindow = window.open("", "_blank");
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Faculty Plantilla - CCS IT AY2025-2026 1st Term</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              table { width: 100%; border-collapse: collapse; }
+              th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; }
+              th { background-color: #f7f7f7; }
+            </style>
+          </head>
+          <body>
+            <h2>Department Faculty Plantilla of CCS – Department of Information Technology</h2>
+            <h4>Academic Year 2025–2026, 1st Term</h4>
+            ${plantillaElement.outerHTML}
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
     }
-    if (!/^\d{8}$/.test(idNumber)) {
-      setError("⚠ ID Number must be exactly 8 digits.");
-      return;
-    }
-    setError("");
-
-    const today = new Date().toLocaleDateString("en-US");
-    const newPetition = {
-      code: course,
-      title: course,
-      submitted: today,
-      reason,
-      status: "Less than Minimum",
-    };
-
-    setPetitions([newPetition, ...petitions]);
-
-    setFirstName("");
-    setLastName("");
-    setIdNumber("");
-    setDegree("");
-    setDept("");
-    setCourse("");
-    setReason("");
   };
 
   return (
-    <div className="min-h-screen w-full bg-white text-slate-900">
+    <div className="min-h-screen w-full bg-white text-slate-900 overflow-x-hidden">
       <TopBar />
 
-      <main className="p-6 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Petition Form */}
-          <section>
-            <h2 className="text-xl font-bold mb-1">Section Petition Form</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Submit a petition to request additional sections or slots
-            </p>
+      <main className="w-full px-8 py-8">
+        {/* Title */}
+        <header className="mb-4">
+          <h1 className="text-xl font-semibold">
+            Department Faculty Plantilla of CCS – Department of Information Technology
+            for Academic Year 2025–2026, 1st Term
+          </h1>
+          <p className="text-sm text-gray-600">Full-time Faculty</p>
+        </header>
 
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-5 text-sm text-amber-800">
-              <h3 className="font-semibold mb-1">⚠ Petition Guidelines</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Only 1 course petition per student allowed</li>
-                <li>Petitions are subject to faculty availability</li>
-                <li>Invalid reasons: professor preference</li>
-                <li>
-                  Not offered; or Not listed in MLS View Course Offerings will NOT be entertained
-                </li>
-              </ul>
-            </div>
+        {/* Workflow chips */}
+        <WorkflowChips />
 
-            {error && (
-              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
-                {error}
+        {/* Action buttons */}
+        <div className="flex items-center justify-end gap-3 mt-6">
+          <button
+            onClick={() => setShowApprovePrompt(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
+          >
+            <CheckCheck className="h-4 w-4" />
+            Approve
+          </button>
+          <button
+            onClick={() => setShowMessagePrompt(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
+          >
+            <Send className="h-4 w-4" />
+            Send Message
+          </button>
+        </div>
+
+        {/* Approval Modal */}
+        {showApprovePrompt && (
+          <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
+                <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
-            )}
+              <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
+              <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
+                Please confirm that this is the final{" "}
+                <span className="font-semibold">Faculty Plantilla</span> to be submitted to the{" "}
+                <span className="font-semibold">Department Chair</span> for faculty loading.
+                Once submitted, this action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowApprovePrompt(false)}
+                  className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApprove}
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+                >
+                  Yes, I Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+        {/* Quick Message Prompt */}
+        {showMessagePrompt && (
+          <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-emerald-700">Quick Message</h3>
+                <button
+                  onClick={() => setShowMessagePrompt(false)}
+                  className="rounded-full p-1 hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-emerald-700 mb-1">
-                    First Name
-                  </label>
+                  <label className="block text-sm font-medium">To:</label>
                   <input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Ex. Juan"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    placeholder="Recipient email or name"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-emerald-700 mb-1">
-                    Last Name
-                  </label>
+                  <label className="block text-sm font-medium">Subject:</label>
                   <input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Ex. Dela Cruz"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Subject"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+                <div className="border border-gray-200 bg-gray-50 p-3 rounded-lg text-sm flex items-center justify-between">
+                <span>
+                  📎 Attached file: <strong>{plantillaFile}</strong>
+                </span>
+                <button
+                  onClick={handleViewPlantilla}
+                  className="text-emerald-700 hover:underline text-sm"
+                >
+                  View
+                </button>
+              </div>
+                <div>
+                  <label className="block text-sm font-medium">Message:</label>
+                  <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="Type your message..."
+                    className="h-40 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-emerald-700 mb-1">
-                  ID Number
-                </label>
-                <input
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  placeholder="12345678"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
-                />
+              <div className="flex justify-end gap-2 mt-5">
+                <button
+                  onClick={() => setShowMessagePrompt(false)}
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    alert(
+                      `📧 Message sent to ${to || "recipient"}:\n\nSubject: ${subject}\n\n${body}\n\n📎 Attached: ${plantillaFile}`
+                    );
+                    setShowMessagePrompt(false);
+                    setTo("");
+                    setSubject("");
+                    setBody("");
+                  }}
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+                >
+                  Send
+                </button>
               </div>
-
-              <SelectBox
-                label="Degree Program"
-                value={degree}
-                onChange={setDegree}
-                options={["BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS", "BS IET-GD", "BS IET-AD", "BSIT", "BSIS", "Others"]}
-              />
-
-              <SelectBox
-                label="Course Department"
-                value={dept}
-                onChange={(val) => {
-                  setDept(val);
-                  setCourse("");
-                  setReason("");
-                }}
-                options={Object.keys(courseOptions)}
-              />
-
-              <SelectBox
-                label="Course"
-                value={course}
-                onChange={setCourse}
-                options={dept ? courseOptions[dept] : []}
-                disabled={!dept}
-              />
-
-              <SelectBox
-                label="Reason"
-                value={reason}
-                onChange={setReason}
-                options={reasons}
-                disabled={!dept}
-              />
             </div>
+          </div>
+        )}
 
-            <button
-              onClick={handleSubmit}
-              className="mt-6 rounded-lg bg-[#21804A] px-6 py-2 text-white font-medium hover:bg-[#18693B]"
-            >
-              Submit Petition
-            </button>
-          </section>
+        {/* Table */}
+        <div className="mt-8 w-full overflow-x-auto border border-gray-300 bg-white shadow-sm rounded-lg">
+          <table className="w-full text-sm border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-50 text-gray-700 text-center border-b">
+                <th rowSpan={2} className="px-3 py-2 font-semibold text-left">
+                  Faculty
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Rank
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Course
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Section
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Day
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Time
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Room
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  No. of Students
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  Lecture Hours
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  Lab Hours
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  Student Unit(s)
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  On Leave
+                </th>
+                <th rowSpan={2} className="px-2 py-2 font-semibold rotate-header">
+                  Type of Course
+                </th>
+                <th colSpan={4} className="px-3 py-2 font-semibold border-l border-gray-300">
+                  NATURE OF LOAD
+                </th>
+                <th colSpan={3} className="px-3 py-2 font-semibold border-l border-gray-300">
+                  PREMIUMS
+                </th>
+                <th rowSpan={2} className="px-3 py-2 font-semibold">
+                  Remarks
+                </th>
+              </tr>
+              <tr className="bg-gray-50 text-gray-700 text-center border-b text-m">
+                <th className="px-2 py-2 font-semibold rotate-header">Teaching</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Admin</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Research</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Faculty Unit(s)</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Grad Load</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Premium 4th Prep</th>
+                <th className="px-2 py-2 font-semibold rotate-header">Overload (NCA)</th>
+              </tr>
+            </thead>
 
-          {/* Petition Status */}
-          <section className="md:border-l md:pl-8 border-gray-200">
-            <h2 className="text-xl font-bold mb-1">Petition Status</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Track your section petition requests and their status
-            </p>
+            <tbody className="divide-y text-center">
+              <tr>
+                <td className="p-3 text-left font-medium text-emerald-700">
+                  CABREDO, RAFAEL ANGSICO
+                </td>
+                <td>1</td>
+                <td>CCPROG3</td>
+                <td>S12</td>
+                <td>M / H</td>
+                <td>9:15–10:45</td>
+                <td>ONLINE / GK306A</td>
+                <td>20</td>
+                <td>1.5</td>
+                <td>1.5</td>
+                <td>3.0</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>9.0</td>
+                <td>3.0</td>
+                <td>0.0</td>
+                <td>12.0</td>
+                <td>0.0</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>—</td>
+              </tr>
 
-            {petitions.map((p, i) => (
-              <StatusCard key={i} {...p} />
-            ))}
-          </section>
+              <tr>
+                <td className="p-3 text-left font-medium text-emerald-700">
+                  NICDAO, DIOSDADO R. III
+                </td>
+                <td>2</td>
+                <td>CCINOV8</td>
+                <td>S12</td>
+                <td>M / H</td>
+                <td>9:15–10:45</td>
+                <td>ONLINE / AG1904</td>
+                <td>40</td>
+                <td>1.5</td>
+                <td>1.5</td>
+                <td>3.0</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>9.0</td>
+                <td>3.0</td>
+                <td>0.0</td>
+                <td>12.0</td>
+                <td>0.0</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </main>
     </div>

@@ -105,6 +105,14 @@ const tagColor = (t: string) => {
 function ApoTopBar({ fullName, role }: { fullName: string; role: string }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  // --- Notifications ---
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: "Department Chair approved your Plantilla", details: "The Dean has been notified.", time: new Date(Date.now() - 5 * 60 * 1000), seen: false },
+    { id: 2, title: "Provost feedback received", details: "Review comments have been added.", time: new Date(Date.now() - 20 * 60 * 1000), seen: false },
+    { id: 3, title: "New course schedule uploaded", details: "Check the updated 1st Term schedule.", time: new Date(Date.now() - 60 * 60 * 1000), seen: false },
+  ]);
+  const notifRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
 
@@ -112,6 +120,8 @@ function ApoTopBar({ fullName, role }: { fullName: string; role: string }) {
     const onDocClick = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
         setMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node))
+        setNotifOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
@@ -132,6 +142,23 @@ function ApoTopBar({ fullName, role }: { fullName: string; role: string }) {
     localStorage.removeItem("authToken");
     sessionStorage.clear();
     navigate("/login");
+  };
+  const timeAgo = (d: Date) => {
+    const s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return `${s}s ago`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m} minutes ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} hours ago`;
+    const dd = Math.floor(h / 24);
+    return `${dd} day${dd > 1 ? "s" : ""} ago`;
+  };
+
+  const hasUnseen = notifications.some((n) => !n.seen);
+  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
+  const toggleNotif = () => {
+    setNotifOpen((v) => !v);
+    if (!notifOpen) setNotifications((n) => n.map((x) => ({ ...x, seen: true })));
   };
 
   return (
@@ -173,9 +200,38 @@ function ApoTopBar({ fullName, role }: { fullName: string; role: string }) {
             >
               <Inbox className="h-5 w-5" />
             </button>
-            <button className="rounded-md p-2 hover:bg-white/15" title="Notifications">
-              <Bell className="h-5 w-5" />
-            </button>
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={toggleNotif}
+                  className="relative rounded-md p-2 hover:bg-white/15"
+                  title="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {hasUnseen && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
+                    <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {sortedNotifs.length ? (
+                        sortedNotifs.map((n) => (
+                          <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
+                            <div className="font-semibold text-slate-900">{n.title}</div>
+                            <div className="text-sm text-gray-600">{n.details}</div>
+                            <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
           </div>
         </div>
         <div className="h-[2px] w-full bg-neutral-200/80" />
@@ -888,7 +944,7 @@ function CourseCard({
 
 /* ----------------------- Workflow Chips ----------------------- */
 const WorkflowChips = () => {
-  const chips = [
+  const steps = [
     "APO",
     "Office Manager",
     "APO",
@@ -899,17 +955,23 @@ const WorkflowChips = () => {
     "Provost",
   ];
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {chips.map((c, idx) => (
-        <span
-          key={c + idx}
-          className={cls(
-            "rounded-full border px-3 py-1 text-[12px]",
-            c === "APO" ? "border-emerald-700 bg-emerald-700 text-white" : "border-gray-300 bg-white text-gray-800"
+    <div className="flex flex-wrap items-center gap-2 mt-3">
+      {steps.map((step, i) => (
+        <React.Fragment key={step}>
+          <span
+            className={cls(
+              "rounded-full px-3 py-1 text-[13px] font-medium border",
+              step === "APO"
+                ? "border-emerald-700 bg-emerald-700 text-white"
+                : "border-gray-300 bg-white text-gray-800"
+            )}
+          >
+            {step}
+          </span>
+          {i < steps.length - 1 && (
+            <span className="text-gray-400">—</span>
           )}
-        >
-          {c}
-        </span>
+        </React.Fragment>
       ))}
     </div>
   );

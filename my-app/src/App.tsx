@@ -9,7 +9,9 @@ import STUDENT_Screen from "./STUDENT_Screen";
 import APO_PreEnlistment from "./APO_PreEnlistment";
 import APO_CourseOfferings from "./APO_CourseOfferings";
 import APO_RoomAllocation from "./APO_RoomAllocation";
+import APO_Inbox from "./APO_Inbox";
 import OA_Screen from "./OA_Screen";
+import OA_Inbox from "./OA_Inbox";
 import DEAN_Screen from "./DEAN_Screen";
 import PROVOST_Screen from "./PROVOST_Screen";
 
@@ -41,10 +43,12 @@ export default function App() {
         <Route path="/apo/preenlistment" element={<APO_PreEnlistment />} />
         <Route path="/apo/courseofferings" element={<APO_CourseOfferings />} />
         <Route path="/apo/roomallocation" element={<APO_RoomAllocation />} />
-        
+        <Route path="/apo/inbox" element={<APO_Inbox />} />
+
         {/* Office Assistant routes */}
         <Route path="/officeassistant/screen" element={<OA_Screen />} />
-        
+        <Route path="/officeassistant/inbox" element={<OA_Inbox />} />
+
         {/* Dean routes */}
         <Route path="/dean/screen" element={<DEAN_Screen />} />
         
