@@ -10,11 +10,14 @@ import APO_PreEnlistment from "./APO_PreEnlistment";
 import APO_CourseOfferings from "./APO_CourseOfferings";
 import APO_RoomAllocation from "./APO_RoomAllocation";
 import APO_Inbox from "./APO_Inbox";
-import OA_Screen from "./OA_Screen";
+import OA_Plantilla from "./OA_Plantilla";
 import OA_Inbox from "./OA_Inbox";
-import DEAN_Screen from "./DEAN_Screen";
-import PROVOST_Screen from "./PROVOST_Screen";
-
+import DEAN_Plantilla from "./DEAN_Plantilla";
+import DEAN_ClassRetention from "./DEAN_ClassRetention";
+import DEAN_Inbox from "./DEAN_Inbox";
+import PROVOST_Plantilla from "./PROVOST_Plantilla";
+import PROVOST_ClassRetention from "./PROVOST_ClassRetention";
+import PROVOST_Inbox from "./PROVOST_Inbox";
 import FAC_Overview from "./FAC_Overview"; 
 
 export default function App() {
@@ -46,14 +49,18 @@ export default function App() {
         <Route path="/apo/inbox" element={<APO_Inbox />} />
 
         {/* Office Assistant routes */}
-        <Route path="/officeassistant/screen" element={<OA_Screen />} />
+        <Route path="/officeassistant/plantilla" element={<OA_Plantilla />} />
         <Route path="/officeassistant/inbox" element={<OA_Inbox />} />
 
         {/* Dean routes */}
-        <Route path="/dean/screen" element={<DEAN_Screen />} />
-        
+        <Route path="/dean/plantilla" element={<DEAN_Plantilla />} />
+        <Route path="/dean/classretention" element={<DEAN_ClassRetention/>} />
+        <Route path="/dean/inbox" element={<DEAN_Inbox />} />
+
         {/* Provost routes */}
-        <Route path="/provost/screen" element={<PROVOST_Screen />} />
+        <Route path="/provost/plantilla" element={<PROVOST_Plantilla />} />
+        <Route path="/provost/classretention" element={<PROVOST_ClassRetention/>} />
+        <Route path="/provost/inbox" element={<PROVOST_Inbox />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />

@@ -115,8 +115,8 @@ function TopBar() {
                 <UserCircle className="h-6 w-6" />
               </span>
               <span className="leading-tight text-left">
-                <div className="text-[17px] font-semibold">Felinor Hortinela-Robles</div>
-                <div className="text-[12px] opacity-90">Office Assistant | Department of Information Technology</div>
+                <div className="text-[17px] font-semibold">Ethel Joy Chua Ong</div>
+                <div className="text-[12px] opacity-90">Dean</div>
               </span>
             </button>
             {menuOpen && (
@@ -134,7 +134,7 @@ function TopBar() {
           {/* Inbox + Notifications */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate("/officeassistant/inbox")}
+              onClick={() => navigate("/dean/inbox")}
               className="rounded-md p-2 hover:bg-white/15"
               title="Inbox"
             >
@@ -203,7 +203,7 @@ export default function ADMIN_Inbox() {
   const openCompose = () => setMode("compose");
   const openRead = (m: Mail) => { setSelected(m); setMode("read"); };
   const backToDefault = () => { setMode("default"); setSelected(null); };
-  const goBack = () => navigate("/officeassistant/plantilla");
+  const goBack = () => navigate("/dean/plantilla");
 
   return (
     <div className="min-h-screen w-full bg-gray-50 text-slate-900" style={{ scrollbarGutter: "stable both-edges" }}>
