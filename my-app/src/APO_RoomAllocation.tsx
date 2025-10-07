@@ -10,18 +10,85 @@ const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" "
 const chipClass =
   "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700";
 
-/* ---------------- Top Bar ---------------- */
-function TopBar({ fullName, role }: { fullName: string; role: string }) {
+/* ----------------------- Top Bar ----------------------- */
+function TopBar({
+  fullName,
+  role,
+}: {
+  fullName: string;
+  role: string;
+}) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const logout = () => { localStorage.removeItem("authToken"); sessionStorage.clear(); navigate("/login"); };
+  // --- Notifications ---
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: "Department Chair approved your Plantilla", details: "The Dean has been notified.", time: new Date(Date.now() - 5 * 60 * 1000), seen: false },
+    { id: 2, title: "Provost feedback received", details: "Review comments have been added.", time: new Date(Date.now() - 20 * 60 * 1000), seen: false },
+    { id: 3, title: "New course schedule uploaded", details: "Check the updated 1st Term schedule.", time: new Date(Date.now() - 60 * 60 * 1000), seen: false },
+  ]);
+  const notifRef = useRef<HTMLDivElement | null>(null);
+
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+    if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
+      setMenuOpen(false);
+    if (notifRef.current && !notifRef.current.contains(e.target as Node))
+      setNotifOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const el = headerRef.current;
+    const setVar = () =>
+      document.documentElement.style.setProperty(
+        "--header-h",
+        `${el.offsetHeight}px`
+      );
+    setVar();
+    const ro = new ResizeObserver(setVar);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("authToken");
+    sessionStorage.clear();
+    navigate("/login");
+  };
+  const timeAgo = (d: Date) => {
+    const s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return `${s}s ago`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m} minutes ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} hours ago`;
+    const dd = Math.floor(h / 24);
+    return `${dd} day${dd > 1 ? "s" : ""} ago`;
+  };
+
+  const hasUnseen = notifications.some((n) => !n.seen);
+  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
+  const toggleNotif = () => {
+    setNotifOpen((v) => !v);
+    if (!notifOpen) setNotifications((n) => n.map((x) => ({ ...x, seen: true })));
+  };
+
   return (
-    <header className="sticky top-0 z-[80]">
+    <header className="sticky top-0 z-[80]" ref={headerRef}>
       <div className="w-full border-b border-emerald-900/30 bg-gradient-to-r from-emerald-800 via-emerald-700 to-green-600">
         <div className="mx-auto flex w-full items-center justify-between px-5 py-4 text-white">
-          <div className="relative">
-            <button onClick={() => setMenuOpen(o => !o)}
-              className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-white/10">
+          <div ref={wrapperRef} className="relative">
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-white/10"
+            >
               <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20">
                 <UserCircle className="h-6 w-6" />
               </span>
@@ -30,25 +97,64 @@ function TopBar({ fullName, role }: { fullName: string; role: string }) {
                 <div className="text-[12px] opacity-90">{role}</div>
               </span>
             </button>
+
             {menuOpen && (
               <div className="absolute left-0 top-full z-[90] mt-2 w-56 rounded-2xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
-                <div className="px-4 pb-2 pt-3 text-[15px] font-semibold text-emerald-700">My Account</div>
+                <div className="px-4 pb-2 pt-3 text-[15px] font-semibold text-emerald-700">
+                  My Account
+                </div>
                 <div className="mx-4 h-px bg-neutral-200" />
-                <button onClick={logout}
-                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-[15px] hover:bg-neutral-50">
-                  <LogOut className="h-4 w-4" /> <span>Sign Out</span>
+                <button
+                  onClick={logout}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-[15px] hover:bg-neutral-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
                 </button>
               </div>
             )}
           </div>
+
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate("/apo/inbox")}
-              className="rounded-md p-2 hover:bg-white/15" title="Inbox">
+            <button
+              onClick={() => navigate("/apo/inbox")}
+              className="rounded-md p-2 hover:bg-white/15"
+              title="Inbox"
+            >
               <Inbox className="h-5 w-5" />
             </button>
-            <button className="rounded-md p-2 hover:bg-white/15" title="Notifications">
-              <Bell className="h-5 w-5" />
-            </button>
+            {/* Notifications */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={toggleNotif}
+                className="relative rounded-md p-2 hover:bg-white/15"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {hasUnseen && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
+                  <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {sortedNotifs.length ? (
+                      sortedNotifs.map((n) => (
+                        <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
+                          <div className="font-semibold text-slate-900">{n.title}</div>
+                          <div className="text-sm text-gray-600">{n.details}</div>
+                          <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="h-[2px] w-full bg-neutral-200/80" />
@@ -200,25 +306,59 @@ function MultiSelect({
 type Room = {
   code: string; building: string; campus: string;
   status: "Available" | "Full Slots"; capacity: number;
-  type: "Lab" | "Classroom"; timeSlots?: string[];
+  type: "Lab" | "Classroom";
+  schedule?: { day: string; slot: string; sectionCode?: string }[];
 };
+
+const SECTIONS = [
+  {
+    courseCode: "CCPROG3",
+    section: "S12",
+    faculty: "CABREDO, RAFAEL A.",
+    schedule: [
+      { day: "Thursday", slot: "07:30 – 09:00" },
+    ],
+  },
+  {
+    courseCode: "CCPROG3",
+    section: "S13",
+    faculty: "CABREDO, RAFAEL A.",
+    schedule: [
+      { day: "Thursday", slot: "09:15 – 10:45" },
+    ],
+  },
+  {
+    courseCode: "ITNET01",
+    section: "S11",
+    faculty: "CU, GREGORY",
+    schedule: [
+      { day: "Wednesday", slot: "12:45 – 14:15" },
+    ],
+  },
+];
+
 const initialRooms: Room[] = [
   { 
     code: "GK301", building: "Gokongwei Hall", campus: "Manila Campus", 
     status: "Available", capacity: 22, type: "Lab",
-    timeSlots: ["07:30 – 09:00", "12:45 – 14:15", "14:30 – 16:00"] 
+    schedule: [
+      { day: "Monday", slot: "07:30 – 09:00" },
+      { day: "Wednesday", slot: "12:45 – 14:15" },
+      { day: "Friday", slot: "14:30 – 16:00" }
+    ]
   },
   { 
     code: "GK302A", building: "Gokongwei Hall", campus: "Manila Campus", 
     status: "Full Slots", capacity: 22, type: "Lab",
-    timeSlots: ["09:15 – 10:45"] 
+    schedule: [{ day: "Tuesday", slot: "09:15 – 10:45" }]
   },
   { 
     code: "GK302B", building: "Gokongwei Hall", campus: "Manila Campus", 
-    status: "Available", capacity: 22, type: "Lab", 
-    timeSlots: [] 
+    status: "Available", capacity: 22, type: "Lab",
+    schedule: []
   }
 ];
+
 
 const TIME_SLOTS = [
   "07:30 – 09:00",
@@ -236,6 +376,15 @@ function AddRoomModal({ onSave, onCancel }: { onSave: (room: Room) => void; onCa
   const [campus, setCampus] = useState(""), [building, setBuilding] = useState(""),
         [code, setCode] = useState(""), [capacity, setCapacity] = useState(""),
         [type, setType] = useState<Room["type"] | "">(""), [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [schedules, setSchedules] = useState<{ day: string; slot: string }[]>([]);
+  const [selectedDay, setSelectedDay] = useState("");
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedSlots([]);
+  }, [selectedDay]);
+
+
   return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
@@ -264,14 +413,54 @@ function AddRoomModal({ onSave, onCancel }: { onSave: (room: Room) => void; onCa
                 options={["Classroom", "Lab"]} placeholder="-- Select an option --" />
             </div>
           </div>
-          <MultiSelect label="Time Slots" options={TIME_SLOTS} value={timeSlots} onChange={setTimeSlots} />
+          {/* Choose Day then Time Slots */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">Add Schedule</label>
+            <div className="flex items-start gap-2">
+              <div className="flex-1 self-stretch">
+                <SelectBox
+                  value={selectedDay}
+                  onChange={setSelectedDay}
+                  options={["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]}
+                  placeholder="Select Day"
+                  className="w-full"
+                />
+              </div>
+              <div className="flex-1 self-stretch">
+                <MultiSelect
+                  label=""
+                  options={TIME_SLOTS}
+                  value={selectedSlots}
+                  onChange={(slots) => {
+                    setSelectedSlots(slots);
+                    if (selectedDay) {
+                      const updatedSchedules = [
+                        ...schedules.filter(s => s.day !== selectedDay),
+                        ...slots.map(slot => ({ day: selectedDay, slot }))
+                      ];
+                      setSchedules(updatedSchedules);
+                    }
+                  }}
+                  disabled={!selectedDay}
+                />
+              </div>
+            </div>
+
+            {schedules.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {schedules.map((s, i) => (
+                  <span key={i} className={chipClass}>{s.day} – {s.slot}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <button onClick={onCancel}
             className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200">Cancel</button>
           <button onClick={() => {
               if (!code || !campus || !building || !capacity || !type) return;
-              onSave({ code, campus, building, capacity: Number(capacity), status: "Available", type, timeSlots });
+              onSave({ code, campus, building, capacity: Number(capacity), status: "Available", type, schedule: schedules });
             }}
             className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110">Add</button>
         </div>
@@ -284,20 +473,86 @@ function AddRoomModal({ onSave, onCancel }: { onSave: (room: Room) => void; onCa
 function EditRoomModal({
   room, onSave, onCancel, onRemove
 }: { room: Room; onSave: (r: Room) => void; onCancel: () => void; onRemove: (code: string) => void; }) {
-  const [timeSlots, setTimeSlots] = useState<string[]>(room.timeSlots || []);
-  return (
+const [schedules, setSchedules] = useState<{ day: string; slot: string }[]>(room.schedule || []);
+const [selectedDay, setSelectedDay] = useState("");
+const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+
+useEffect(() => {
+  if (selectedDay) {
+    const existingSlots = schedules
+      .filter(s => s.day === selectedDay)
+      .map(s => s.slot);
+    setSelectedSlots(existingSlots);
+  } else {
+    setSelectedSlots([]);
+  }
+}, [selectedDay, schedules]);
+
+
+ return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
         <h3 className="mb-4 text-xl font-semibold text-emerald-700">Edit Room</h3>
         <div className="space-y-4 text-sm">
-          <div><div className="font-semibold">Campus</div><div>{room.campus}</div></div>
-          <div><div className="font-semibold">Building</div><div>{room.building}</div></div>
-          <div><div className="font-semibold">Room Number</div><div>{room.code}</div></div>
+          {/* Campus, Building, and Room Number on same line */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <div className="font-semibold">Campus</div>
+              <div>{room.campus}</div>
+            </div>
+            <div>
+              <div className="font-semibold">Building</div>
+              <div>{room.building}</div>
+            </div>
+            <div>
+              <div className="font-semibold">Room Number</div>
+              <div>{room.code}</div>
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div><div className="font-semibold">Capacity</div><div>{room.capacity}</div></div>
             <div><div className="font-semibold">Room Type</div><div>{room.type}</div></div>
           </div>
-          <MultiSelect label="Time Slots" options={TIME_SLOTS} value={timeSlots} onChange={setTimeSlots} />
+          {/* Choose Day then Multi Time Slots */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">Edit Schedule</label>
+            <div className="flex items-start gap-2">
+            <div className="flex-1 self-stretch">
+              <SelectBox
+                value={selectedDay}
+                onChange={setSelectedDay}
+                options={["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]}
+                placeholder="Select Day"
+                className="w-full"
+              />
+            </div>
+            <div className="flex-1 self-stretch">
+              <MultiSelect
+                label=""
+                options={TIME_SLOTS}
+                value={selectedSlots}
+                onChange={(slots) => {
+                  setSelectedSlots(slots);
+                  if (selectedDay) {
+                    const updatedSchedules = [
+                      ...schedules.filter(s => s.day !== selectedDay),
+                      ...slots.map(slot => ({ day: selectedDay, slot }))
+                    ];
+                    setSchedules(updatedSchedules);
+                  }
+                }}
+                disabled={!selectedDay}
+              />
+            </div>
+          </div>
+            {schedules.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {schedules.map((s, i) => (
+                  <span key={i} className={chipClass}>{s.day} – {s.slot}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="mt-6 flex justify-between">
           <button onClick={() => onRemove(room.code)}
@@ -305,7 +560,7 @@ function EditRoomModal({
           <div className="flex gap-2">
             <button onClick={onCancel}
               className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200">Cancel</button>
-            <button onClick={() => onSave({ ...room, timeSlots })}
+            <button onClick={() => onSave({ ...room, schedule: schedules })}
               className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110">Save</button>
           </div>
         </div>
@@ -314,30 +569,130 @@ function EditRoomModal({
   );
 }
 
+function AllocateClassModal({
+  room,
+  day,
+  slot,
+  onSave,
+  onCancel,
+  rooms, 
+}: {
+  room: Room;
+  day: string;
+  slot: string;
+  onSave: (sectionCode: string) => void;
+  onCancel: () => void;
+  rooms: Room[]; 
+}) {
+
+  const [selectedSection, setSelectedSection] = useState<string>("");
+
+// Filter only sections that match this day/slot AND are NOT already assigned anywhere
+const availableSections = SECTIONS.filter((sec) => {
+  const matchesSlot = sec.schedule.some((s) => s.day === day && s.slot === slot);
+  if (!matchesSlot) return false;
+
+  const isAlreadyAssigned = rooms.some((r) =>
+    (r.schedule || []).some(
+      (s) => s.sectionCode === `${sec.courseCode}-${sec.section}` && s.day === day && s.slot === slot
+    )
+  );
+  return !isAlreadyAssigned;
+});
+
+  return (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <h3 className="mb-3 text-lg font-semibold text-emerald-700">
+          Allocate Room for Section
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">
+          {room.code} – {day}, {slot}
+        </p>
+
+        <SelectBox
+          value={selectedSection}
+          onChange={setSelectedSection}
+          options={availableSections.map((s) => `${s.courseCode} - ${s.section}`)}
+          placeholder="Select Section"
+        />
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!selectedSection}
+            onClick={() => {
+              const [courseCode, section] = selectedSection.split(" - ");
+              onSave(`${courseCode}-${section}`); // store combined key like "CCPROG3-S12"
+            }}
+            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Room Schedule ---------------- */
-function RoomSchedule({ room, onBack }: { room: Room; onBack: () => void }) {
+function RoomSchedule({
+  room,
+  onBack,
+  onUpdate,
+  rooms, 
+}: {
+  room: Room;
+  onBack: () => void;
+  onUpdate: (r: Room) => void;
+  rooms: Room[];
+}) {
+
+  const [selectedSlot, setSelectedSlot] = useState<{ day: string; slot: string } | null>(null);
+
+const handleAllocate = (sectionCode: string) => {
+  if (!selectedSlot) return;
+
+  const updatedSchedule = (room.schedule || []).map(s =>
+    s.day === selectedSlot.day && s.slot === selectedSlot.slot
+      ? { ...s, sectionCode }          // ⬅️ write the assignment here
+      : s
+  );
+
+  onUpdate({ ...room, schedule: updatedSchedule });
+  setSelectedSlot(null);
+};
+
+const handleRemoveAssignment = (day: string, slot: string) => {
+  const updatedSchedule = (room.schedule || []).map(s =>
+    s.day === day && s.slot === slot
+      ? { ...s, sectionCode: undefined }  // remove the section
+      : s
+  );
+
+  onUpdate({ ...room, schedule: updatedSchedule });
+};
+
   return (
     <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold">Room Allocation</h2>
-        <p className="mb-4 text-sm text-gray-500">Manage room assignments and course scheduling for CCS</p>
-        <div className="mb-4 flex items-center gap-2">
-        <button onClick={onBack}     
-            className="flex items-center gap-2 text-emerald-700 hover:underline">
-            <ArrowLeft className="h-5 w-5" /> 
-            <span className="text-lg font-semibold">Back</span>
-        </button></div>
+      <h2 className="text-lg font-bold">Room Allocation</h2>
+      <p className="mb-4 text-sm text-gray-500">
+        Manage room assignments and course scheduling for CCS
+      </p>
+      <div className="mb-4 flex items-center gap-2">
+        <button onClick={onBack}
+          className="flex items-center gap-2 text-emerald-700 hover:underline">
+          <ArrowLeft className="h-5 w-5" />
+          <span className="text-lg font-semibold">Back</span>
+        </button>
+      </div>
+
       <h2 className="text-lg font-bold mb-1">{room.code} Schedule</h2>
-        <p className="mb-4 text-sm text-gray-500 flex items-center gap-4 flex-wrap">
-        <span className="flex items-center gap-1">
-            <MapPin className="h-4 w-4 text-emerald-700" /> {room.campus}
-        </span>
-        <span className="flex items-center gap-1">
-            <Building2 className="h-4 w-4 text-emerald-700" /> {room.building}
-        </span>
-        <span className="flex items-center gap-1">
-            <Users className="h-4 w-4 text-emerald-700" /> {room.capacity} students
-        </span>
-        </p>
       <div className="overflow-x-auto">
         <div className="min-w-[860px] rounded-xl border border-neutral-300">
           <div className="grid grid-cols-[140px_repeat(6,1fr)] bg-emerald-800 text-white">
@@ -346,33 +701,97 @@ function RoomSchedule({ room, onBack }: { room: Room; onBack: () => void }) {
               <div key={d} className="flex items-center justify-center px-3 py-2 text-sm font-semibold">{d}</div>
             ))}
           </div>
+
           <div className="relative grid grid-cols-[140px_repeat(6,1fr)]" style={{ gridAutoRows: "84px" }}>
             {TIME_SLOTS.map((band, r) => (
               <React.Fragment key={band}>
                 <div className="flex items-center justify-center border-r border-neutral-300 bg-neutral-50 px-2 text-center text-[13px]"
                   style={{ gridColumn: 1, gridRow: r + 1 }}>{band}</div>
-                {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((_, c) => (
-                  <div key={`${c}-${r}`} className="border border-neutral-300"
-                    style={{ gridColumn: c + 2, gridRow: r + 1 }} />
-                ))}
+
+                  {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, c) => {
+                    // what’s configured for this room?
+                    const slotEntry = room.schedule?.find(s => s.day === day && s.slot === band);
+                    const isAllowed  = Boolean(slotEntry);
+                    const isAssigned = Boolean(slotEntry?.sectionCode);
+
+                    return (
+                      <div
+                        key={`${day}-${band}`}
+                        className={cls(
+                          "border border-neutral-300 flex flex-col items-center justify-center text-xs p-1",
+                          !isAllowed ? "bg-gray-100 text-gray-400"
+                          : isAssigned ? "bg-emerald-50 text-emerald-700 font-medium"
+                          : "bg-white text-gray-700"
+                        )}
+                        style={{ gridColumn: c + 2, gridRow: r + 1 }}
+                      >
+                        {!isAllowed ? (
+                          <>—</>
+                        ) : isAssigned ? (
+                        <>
+                          {(() => {
+                          const section = SECTIONS.find(
+                            s => `${s.courseCode}-${s.section}` === slotEntry!.sectionCode
+                          );
+                          if (!section) return <span>{slotEntry!.sectionCode}</span>;
+                          return (
+                            <div className="text-center leading-tight">
+                              <div className="font-semibold text-[12px]">
+                                {section.courseCode} – {section.section}
+                              </div>
+                              <div className="text-[11px] text-gray-600 flex items-center justify-center gap-1">
+                                <Users className="h-3 w-3 text-gray-500" /> {section.faculty}
+                              </div>
+                            </div>
+                          );
+                          })()}
+                            <div className="flex gap-1 mt-1">
+                              <button
+                                onClick={() => setSelectedSlot({ day, slot: band })}
+                                className="text-[11px] text-blue-600 underline"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleRemoveAssignment(day, band)}
+                                className="text-[11px] text-red-600 underline"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedSlot({ day, slot: band })}
+                            className="rounded bg-emerald-600 text-white text-[11px] px-2 py-1 hover:brightness-110"
+                          >
+                            + Add Class
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+
               </React.Fragment>
-            ))}
-            {room.timeSlots?.map((slot, idx) => (
-              <div key={idx} className="p-2"
-                style={{ gridColumn: 4, gridRow: `${TIME_SLOTS.indexOf(slot) + 1}` }}>
-                <div className="flex flex-col items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50/90 p-2 text-xs font-medium shadow-sm">
-                  <div className="font-semibold">{room.code}</div>
-                  <div>{slot}</div>
-                  <div>{room.type}</div>
-                </div>
-              </div>
             ))}
           </div>
         </div>
       </div>
+
+      {selectedSlot && (
+        <AllocateClassModal
+          room={room}
+          day={selectedSlot.day}
+          slot={selectedSlot.slot}
+          rooms={rooms}
+          onSave={handleAllocate}
+          onCancel={() => setSelectedSlot(null)}
+        />
+      )}
     </div>
   );
 }
+
 
 /* ---------------- Room Card ---------------- */
 function RoomCard({ room, onEdit, onView }: { room: Room; onEdit: (r: Room) => void; onView: (r: Room) => void; }) {
@@ -390,13 +809,6 @@ function RoomCard({ room, onEdit, onView }: { room: Room; onEdit: (r: Room) => v
         <span className="flex items-center gap-1"><Users className="h-4 w-4 text-emerald-700" />{room.capacity}</span>
         <span className="flex items-center gap-1">{typeIcon}{room.type}</span>
       </div>
-      {room.timeSlots && room.timeSlots.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {room.timeSlots.map(t =>
-            <span key={t} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">{t}</span>
-          )}
-        </div>
-      )}
       <div className="mt-3 flex gap-2">
         <button onClick={() => onView(room)}
           className="flex items-center gap-1 rounded border px-3 py-1 text-sm hover:bg-gray-100">
@@ -409,6 +821,12 @@ function RoomCard({ room, onEdit, onView }: { room: Room; onEdit: (r: Room) => v
       </div>
     </div>
   );
+}
+function computeRoomStatus(room: Room): "Available" | "Full Slots" {
+  const sched = room.schedule || [];
+  // A room is Full only when it has at least one slot and all of them have sectionCode assigned
+  if (sched.length > 0 && sched.every(s => s.sectionCode)) return "Full Slots";
+  return "Available";
 }
 
 /* ---------------- Page ---------------- */
@@ -424,9 +842,21 @@ export default function RoomAllocationScreen() {
     (campus === "All Campuses" || r.campus === campus) &&
     (building === "All Buildings" || r.building === building)
   );
+  
+  useEffect(() => {
+    setRooms(prev => prev.map(r => ({ ...r, status: computeRoomStatus(r) })));
+  }, []);
 
-  const addRoom = (room: Room) => { setRooms(p => [...p, room]); setShowAdd(false); };
-  const saveEditedRoom = (u: Room) => { setRooms(p => p.map(r => r.code === u.code ? u : r)); setEditing(null); };
+  const addRoom = (room: Room) => { 
+    const withStatus = { ...room, status: computeRoomStatus(room) };
+    setRooms(p => [...p, withStatus]); 
+    setShowAdd(false); 
+  };
+  const saveEditedRoom = (u: Room) => {
+    const updated = { ...u, status: computeRoomStatus(u) };
+    setRooms(p => p.map(r => r.code === u.code ? updated : r));
+    setEditing(null);
+  };
   const removeRoom = (code: string) => { setRooms(p => p.filter(r => r.code !== code)); setEditing(null); };
 
   return (
@@ -442,7 +872,7 @@ export default function RoomAllocationScreen() {
               <SelectBox value={campus} onChange={setCampus}
                 options={["All Campuses", "Manila Campus", "Laguna Campus"]} />
               <SelectBox value={building} onChange={setBuilding}
-                options={["All Buildings", "Gokongwei Hall", "St. La Salle Hall", "Br. Andrew Gonzales Hall"]} />
+                options={["All Buildings", "St. La Salle Hall", "Velasco Hall", "Gokongwei Hall", "Br. Andrew Gonzales Hall"]} />
               <button onClick={() => setShowAdd(true)}
                 className="ml-auto rounded bg-emerald-700 px-4 py-2 text-sm text-white hover:brightness-110">+ Add Room</button>
             </div>
@@ -458,7 +888,16 @@ export default function RoomAllocationScreen() {
             </div>
           </div>
         ) : (
-          <RoomSchedule room={viewingRoom} onBack={() => setViewingRoom(null)} />
+        <RoomSchedule
+          room={viewingRoom}
+          onBack={() => setViewingRoom(null)}
+          onUpdate={(updated) => {
+            const recomputed = { ...updated, status: computeRoomStatus(updated) };
+            setRooms(prev => prev.map(r => r.code === updated.code ? recomputed : r));
+            setViewingRoom(recomputed);
+          }}
+          rooms={rooms} 
+        />
         )}
       </main>
 

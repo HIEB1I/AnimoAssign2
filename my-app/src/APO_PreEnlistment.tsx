@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react"; 
+import React, { useEffect, useRef, useState } from "react";  
 import { useNavigate, NavLink } from "react-router-dom";
+import Papa, { ParseResult } from "papaparse"; // typed import for CSV parsing
 import {
   UserCircle,
   Bell,
@@ -9,7 +10,8 @@ import {
   Check,
   BookOpen,
   Users, 
-  Building2
+  Building2,
+  Upload
 } from "lucide-react";
 
 /* ----------------------- Utilities ----------------------- */
@@ -26,16 +28,24 @@ function TopBar({
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  // --- Notifications ---
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: "Department Chair approved your Plantilla", details: "The Dean has been notified.", time: new Date(Date.now() - 5 * 60 * 1000), seen: false },
+    { id: 2, title: "Provost feedback received", details: "Review comments have been added.", time: new Date(Date.now() - 20 * 60 * 1000), seen: false },
+    { id: 3, title: "New course schedule uploaded", details: "Check the updated 1st Term schedule.", time: new Date(Date.now() - 60 * 60 * 1000), seen: false },
+  ]);
+  const notifRef = useRef<HTMLDivElement | null>(null);
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      )
-        setMenuOpen(false);
+    if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
+      setMenuOpen(false);
+    if (notifRef.current && !notifRef.current.contains(e.target as Node))
+      setNotifOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
@@ -59,6 +69,23 @@ function TopBar({
     localStorage.removeItem("authToken");
     sessionStorage.clear();
     navigate("/login");
+  };
+  const timeAgo = (d: Date) => {
+    const s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return `${s}s ago`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m} minutes ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} hours ago`;
+    const dd = Math.floor(h / 24);
+    return `${dd} day${dd > 1 ? "s" : ""} ago`;
+  };
+
+  const hasUnseen = notifications.some((n) => !n.seen);
+  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
+  const toggleNotif = () => {
+    setNotifOpen((v) => !v);
+    if (!notifOpen) setNotifications((n) => n.map((x) => ({ ...x, seen: true })));
   };
 
   return (
@@ -104,12 +131,38 @@ function TopBar({
             >
               <Inbox className="h-5 w-5" />
             </button>
-            <button
-              className="rounded-md p-2 hover:bg-white/15"
-              title="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-            </button>
+            {/* Notifications */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={toggleNotif}
+                className="relative rounded-md p-2 hover:bg-white/15"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {hasUnseen && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
+                  <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {sortedNotifs.length ? (
+                      sortedNotifs.map((n) => (
+                        <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
+                          <div className="font-semibold text-slate-900">{n.title}</div>
+                          <div className="text-sm text-gray-600">{n.details}</div>
+                          <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="h-[2px] w-full bg-neutral-200/80" />
@@ -117,6 +170,7 @@ function TopBar({
     </header>
   );
 }
+
 /* ----------------------- Stick Top Tabs ----------------------- */
 function ApoTabs() {
   const items = [
@@ -157,38 +211,9 @@ function ApoTabs() {
 /* ----------------------- Page ----------------------- */
 export default function APO_PreEnlistment() {
   // enlisted courses
-  const [enlistedCourses, setEnlistedCourses] = useState<string[][]>([
-    ["1", "GSD", "CCS", "Manila", "DIT661D", "5"],
-    ["2", "GSD", "CCS", "Manila", "DIT709D", "5"],
-    ["73", "GSM", "CCS", "Manila", "CSC404M", "1"],
-    ["74", "GSM", "CCS", "Manila", "CSC701M", "1"],
-    ["75", "GSM", "CCS", "Manila", "CSC755M", "3"],
-    ["76", "GSM", "CCS", "Manila", "DAT702M", "1"],
-    ["77", "GSM", "CCS", "Manila", "DAT203M", "1"],
-    ["78", "GSM", "CCS", "Manila", "DAT290M", "1"],
-    ["1421", "UGB", "CCS", "Manila", "2DGRAFX", "1"],
-    ["1422", "UGB", "CCS", "Manila", "3DMODEL", "1"],
-    ["1430", "UGB", "CCS", "Manila", "ADPRINT", "1"],
-    ["1431", "UGB", "CCS", "Manila", "ADRULES", "1"],
-    ["1432", "UGB", "CCS", "Manila", "ADVAFIN", "1"],
-    ["1433", "UGB", "CCS", "Manila", "ARVR100", "1"],
-    ["1443", "UGB", "CCS", "Manila", "CAP-IS0", "16"],
-    ["1444", "UGB", "CCS", "Manila", "CAP-IS1", "8"],
-    ["1445", "UGB", "CCS", "Manila", "CAP-IS2", "2"],
-    ["1446", "UGB", "CCS", "Manila", "CAP-IT0", "24"],
-    ["1447", "UGB", "CCS", "Manila", "CAP-IT1", "5"],
-    ["1448", "UGB", "CCS", "Manila", "CAP-IT2", "21"],
-  ]);
-
-/* ----------------------- Enrollment Stats ----------------------- */
-  const [enrollmentStats, setEnrollmentStats] = useState<string[][]>([
-    ["BSINSYS", "62", "47", "40", "33"],
-    ["BSIT", "138", "94", "149", "108"],
-    ["BSMS-CS", "11", "12", "28", "36"],
-    ["BSCS-CSE", "84", "29", "27", "26"],
-    ["BSCS-NIS", "126", "52", "62", "56"],
-    ["BSCS-ST", "227", "250", "261", "270"],
-  ]);
+  const [enlistedCourses, setEnlistedCourses] = useState<string[][]>([]);
+  // enrollment stats
+  const [enrollmentStats, setEnrollmentStats] = useState<string[][]>([]);
 
   const [editIndexCourses, setEditIndexCourses] = useState<number | null>(null);
   const [editRowCourses, setEditRowCourses] = useState<string[] | null>(null);
@@ -224,6 +249,27 @@ export default function APO_PreEnlistment() {
     }
   };
 
+  // CSV Import Handlers
+  const handleImportCourses = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    Papa.parse<string[]>(file, {
+      complete: (results: ParseResult<string[]>) => {
+        setEnlistedCourses(results.data.slice(1)); // remove header row
+      },
+    });
+  };
+
+  const handleImportStats = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    Papa.parse<string[]>(file, {
+      complete: (results: ParseResult<string[]>) => {
+        setEnrollmentStats(results.data.slice(1)); // remove header row
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen w-full bg-gray-50 text-slate-900">
       <TopBar
@@ -239,7 +285,19 @@ export default function APO_PreEnlistment() {
           <div className="flex flex-col md:flex-row">
             {/* Left Panel - Enlisted Courses */}
             <section className="flex-1 max-h-[400px] overflow-y-auto pr-4">
-              <h2 className="text-lg font-bold">List of Enlisted Courses</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">List of Enlisted Courses</h2>
+                <label className="ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
+                  <Upload className="h-4 w-4" />
+                  Import CSV
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportCourses}
+                    className="hidden"
+                  />
+                </label>
+              </div>
               <p className="text-sm text-gray-500 mb-4">
                 Term 1 AY 2025-2026
               </p>
@@ -258,52 +316,43 @@ export default function APO_PreEnlistment() {
                 </thead>
                 <tbody className="text-gray-700">
                   {enlistedCourses.map((row, i) => (
-                    <tr
-                      key={i}
-                      className="border-b last:border-0 hover:bg-gray-50"
-                    >
-                      {editIndexCourses === i ? (
-                        <>
-                          {row.map((cell, j) => (
-                            <td key={j} className="py-1 px-2 max-w-[120px] whitespace-nowrap">
-                              <input
-                                value={editRowCourses?.[j] || ""}
-                                onChange={(e) => {
-                                  const copy = [...(editRowCourses || [])];
-                                  copy[j] = e.target.value;
-                                  setEditRowCourses(copy);
-                                }}
-                                className="w-full px-2 py-1 text-sm rounded-md border border-gray-300 focus:ring-1 focus:ring-emerald-500"
-                              />
-                            </td>
-                          ))}
-                          <td className="py-1 px-2 text-center">
-                            <button
-                              onClick={saveEditCourses}
-                              className="h-7 w-7 flex items-center justify-center rounded-full border border-green-600 text-green-600 hover:bg-green-50"
-                              title="Save"
-                            >
-                              <Check className="h-4 w-4" strokeWidth={2.5} />
-                            </button>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          {row.map((cell, j) => (
-                            <td key={j} className="py-2 px-2 whitespace-nowrap">
-                              {cell}
-                            </td>
-                          ))}
-                          <td className="py-2 px-2 text-center">
-                            <button
-                              onClick={() => startEditCourses(i)}
-                              className="text-gray-500 hover:text-black"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          </td>
-                        </>
-                      )}
+                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                      {row.map((cell, j) => (
+                        <td key={j} className="py-2 px-2 whitespace-nowrap">
+                          {editIndexCourses === i && j === row.length - 1 ? (
+                            <input
+                              value={editRowCourses?.[j] || ""}
+                              onChange={(e) => {
+                                const copy = [...(editRowCourses || [])];
+                                copy[j] = e.target.value;
+                                setEditRowCourses(copy);
+                              }}
+                              type="number"
+                              className="w-full px-2 py-1 text-sm rounded-md border border-gray-300 focus:ring-1 focus:ring-emerald-500"
+                            />
+                          ) : (
+                            cell
+                          )}
+                        </td>
+                      ))}
+                      <td className="py-2 px-2 text-center">
+                        {editIndexCourses === i ? (
+                          <button
+                            onClick={saveEditCourses}
+                            className="h-7 w-7 flex items-center justify-center rounded-full border border-green-600 text-green-600 hover:bg-green-50"
+                            title="Save"
+                          >
+                            <Check className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => startEditCourses(i)}
+                            className="text-gray-500 hover:text-black"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -315,7 +364,19 @@ export default function APO_PreEnlistment() {
 
             {/* Right Panel - Enrollment Stats */}
             <section className="flex-1 max-h-[400px] overflow-y-auto pl-4">
-              <h2 className="text-lg font-bold">Enrollment Statistics</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">Enrollment Statistics</h2>
+                <label className="ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
+                  <Upload className="h-4 w-4" />
+                  Import CSV
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportStats}
+                    className="hidden"
+                  />
+                </label>
+              </div>
               <p className="text-sm text-gray-500 mb-4">
                 Term 1 AY 2025-2026
               </p>
@@ -333,14 +394,10 @@ export default function APO_PreEnlistment() {
                 </thead>
                 <tbody className="text-gray-700">
                   {enrollmentStats.map((row, i) => (
-                    <tr
-                      key={i}
-                      className="border-b last:border-0 hover:bg-gray-50"
-                    >
-                      {editIndexStats === i ? (
-                      <>
-                        {row.map((cell, j) => (
-                          <td key={j} className="py-1 px-2 max-w-[120px] whitespace-nowrap">
+                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                      {row.map((cell, j) => (
+                        <td key={j} className="py-2 px-2 whitespace-nowrap">
+                          {editIndexStats === i && j > 0 ? (
                             <input
                               value={editRowStats?.[j] || ""}
                               onChange={(e) => {
@@ -348,11 +405,16 @@ export default function APO_PreEnlistment() {
                                 copy[j] = e.target.value;
                                 setEditRowStats(copy);
                               }}
+                              type="number"
                               className="w-full px-2 py-1 text-sm rounded-md border border-gray-300 focus:ring-1 focus:ring-emerald-500"
                             />
-                          </td>
-                        ))}
-                        <td className="py-1 px-2 text-center">
+                          ) : (
+                            cell
+                          )}
+                        </td>
+                      ))}
+                      <td className="py-2 px-2 text-center">
+                        {editIndexStats === i ? (
                           <button
                             onClick={saveEditStats}
                             className="h-7 w-7 flex items-center justify-center rounded-full border border-green-600 text-green-600 hover:bg-green-50"
@@ -360,23 +422,15 @@ export default function APO_PreEnlistment() {
                           >
                             <Check className="h-4 w-4" strokeWidth={2.5} />
                           </button>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        {row.map((cell, j) => (
-                          <td key={j} className="py-2 px-2 whitespace-nowrap">{cell}</td>
-                        ))}
-                        <td className="py-2 px-2 text-center">
+                        ) : (
                           <button
                             onClick={() => startEditStats(i)}
                             className="text-gray-500 hover:text-black"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                        </td>
-                      </>
-                    )}
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
