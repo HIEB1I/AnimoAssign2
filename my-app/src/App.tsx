@@ -20,7 +20,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/apo/preenlistment" replace />} />
+        <Route path="/" element={<Navigate to="/apo/courseofferings" replace />} />
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
