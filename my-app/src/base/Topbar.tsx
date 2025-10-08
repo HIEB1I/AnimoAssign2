@@ -83,7 +83,7 @@ export default function Topbar({ open, onToggleSidebar }: TopbarProps) {
                   Jamaecha Dacanay
                 </div>
                 <div className="text-[12px] text-gray-500">
-                  Office Manager
+                  Office Manager | Department of Software Technology
                 </div>
               </span>
             </button>

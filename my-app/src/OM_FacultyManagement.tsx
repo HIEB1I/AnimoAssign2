@@ -227,7 +227,7 @@ export default function OM_FacultyManagement() {
         <header className="mb-6">
           <h1 className="text-2xl font-bold">Faculty Management</h1>
           <p className="text-sm text-gray-600">
-            Manage faculty profiles, load assignments, and preferences
+            Manage faculty profiles, schedule, and teaching history
           </p>
         </header>
 
