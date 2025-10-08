@@ -22,7 +22,7 @@ const items = [
   { to: "/course-offerings", label: "Course Offerings", Icon: BookOpen },
   { to: "/reports-analytics", label: "Reports and Analytics", Icon: BarChart3 },
   { to: "/faculty-forms", label: "Faculty Forms", Icon: FileText },
-  { to: "/section-petitions", label: "Section Petitions", Icon: GitPullRequest },
+  { to: "/section-petitions", label: "Student Petitions", Icon: GitPullRequest },
   { to: "/class-retention", label: "Class Retention", Icon: RotateCcw },
 ];
 
