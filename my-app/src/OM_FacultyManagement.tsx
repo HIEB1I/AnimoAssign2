@@ -162,6 +162,10 @@ export default function OM_FacultyManagement() {
   const [activeModal, setActiveModal] = useState<null | "profile" | "schedule" | "history">(null);
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
 
+  const YEARS = ["AY 2024–2025", "AY 2023–2024", "AY 2022–2023"];
+  const [historyYearIndex, setHistoryYearIndex] = useState(0);
+  const historyYear = YEARS[historyYearIndex];
+
   const departmentOptions = [
     "All Departments",
     "Software Technology",
@@ -286,7 +290,8 @@ export default function OM_FacultyManagement() {
         {/* ---------------- MODALS ---------------- */}
         {activeModal && selectedFaculty && (
           <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
-            <div className="w-full max-w-3xl rounded-2xl bg-white p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+
               {activeModal === "profile" && (
                 <>
                   <h2 className="text-lg font-semibold text-emerald-700 mb-6">
@@ -400,10 +405,10 @@ export default function OM_FacultyManagement() {
                     <p className="text-sm mb-3">{course.title}</p>
                     <div className="grid gap-2">
                       {course.sections.map((section) => (
-                        <div
-                          key={section.id}
-                          className="flex flex-wrap items-center justify-between border rounded-lg px-3 py-2 text-sm bg-gray-50"
-                        >
+                          <div
+                            key={section.id}
+                            className="flex flex-wrap items-center justify-between rounded-lg px-3 py-2 text-sm bg-gray-50"
+                          >
                           <div className="flex flex-wrap items-center gap-3">
                             <span className="font-semibold">{section.id}</span>
                             {section.slots.map((slot, i) => (
@@ -431,17 +436,134 @@ export default function OM_FacultyManagement() {
                 ))}
               </>
             )}
-              {activeModal === "history" && (
-                <>
-                  <h2 className="text-lg font-semibold text-emerald-700 mb-6">
-                    Teaching History
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Teaching history details will appear here (e.g., courses, terms, academic years).
-                  </p>
-                </>
-              )}
+            {activeModal === "history" && (
+              <>
+                <h2 className="text-lg font-semibold text-emerald-700 mb-6">
+                  Teaching History
+                </h2>
 
+                {/* Teaching History Viewer */}
+                <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  {/* Academic Year Header with Navigation */}
+                  <div className="flex justify-between items-center mb-4">
+                    <button
+                      onClick={() => setHistoryYearIndex((i) => Math.max(0, i - 1))}
+                      disabled={historyYearIndex === 0}
+                      className={cls(
+                        "px-3 py-1.5 rounded-lg text-sm font-medium border shadow-sm",
+                        historyYearIndex === 0
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white hover:bg-gray-50 text-gray-700"
+                      )}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span className="text-base font-semibold text-gray-800">
+                      {historyYear}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        setHistoryYearIndex((i) => Math.min(YEARS.length - 1, i + 1))
+                      }
+                      disabled={historyYearIndex === YEARS.length - 1}
+                      className={cls(
+                        "px-3 py-1.5 rounded-lg text-sm font-medium border shadow-sm",
+                        historyYearIndex === YEARS.length - 1
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white hover:bg-gray-50 text-gray-700"
+                      )}
+                    >
+                      Next →
+                    </button>
+                  </div>
+
+                  {/* Sample Data Grouped by Term */}
+                  {Object.entries({
+                    "Term 1": [
+                      {
+                        code: "CCPROG3",
+                        section: "S11",
+                        units: 3,
+                        mode: "Hybrid",
+                        schedule: "MTH 7:30–9:00 AM",
+                      },
+                      {
+                        code: "CSMODEL",
+                        section: "S12",
+                        units: 3,
+                        mode: "Online",
+                        schedule: "TF 10:00–11:30 AM",
+                      },
+                    ],
+                    "Term 2": [
+                      {
+                        code: "CBINTSY",
+                        section: "S14",
+                        units: 3,
+                        mode: "Hybrid",
+                        schedule: "MW 1:00–2:30 PM",
+                      },
+                    ],
+                    "Term 3": [
+                      {
+                        code: "STCLOUD",
+                        section: "S16",
+                        units: 3,
+                        mode: "Hybrid",
+                        schedule: "TH 9:15–10:45 AM",
+                      },
+                    ],
+                  }).map(([term, rows]) => (
+                    <div
+                      key={term}
+                      className="rounded-xl border border-gray-200 mb-6 overflow-hidden"
+                    >
+                      <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">
+                        {term}
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm">
+                          <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide border-b">
+                            <tr>
+                              {["Course Code", "Section", "Units", "Mode", "Schedule"].map(
+                                (h) => (
+                                  <th
+                                    key={h}
+                                    className="px-3 py-2 text-center font-medium whitespace-nowrap"
+                                  >
+                                    {h}
+                                  </th>
+                                )
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r, i) => (
+                              <tr
+                                key={`${term}-${i}`}
+                                className={cls(
+                                  "text-gray-700",
+                                  i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                )}
+                              >
+                                <td className="px-3 py-2 text-center">{r.code}</td>
+                                <td className="px-3 py-2 text-center">{r.section}</td>
+                                <td className="px-3 py-2 text-center">{r.units}</td>
+                                <td className="px-3 py-2 text-center">{r.mode}</td>
+                                <td className="px-3 py-2 text-center">{r.schedule}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
               <div className="flex justify-end mt-8">
                 <button
                   onClick={closeModal}
