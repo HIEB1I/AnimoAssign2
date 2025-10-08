@@ -3,11 +3,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
-  MessageSquareText,
   PanelLeft,
   PanelRight,
-  User as UserIcon,
+  UserCircle,
   LogOut,
+  Inbox
 } from "lucide-react";
 
 type TopbarProps = {
@@ -20,7 +20,6 @@ export default function Topbar({ open, onToggleSidebar }: TopbarProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Close dropdown on outside click or Escape
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
@@ -36,81 +35,79 @@ export default function Topbar({ open, onToggleSidebar }: TopbarProps) {
     };
   }, []);
 
-  const signOut = () => {
+  const logout = () => {
+    localStorage.removeItem("authToken");
+    sessionStorage.clear();
     navigate("/login");
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-white px-3 sm:px-4">
-      {/* Sidebar toggle button */}
-      <div className="flex items-center">
+    <header className="sticky top-0 z-10 bg-white shadow-sm">
+      <div className="flex h-14 w-full items-center justify-between px-3 sm:px-5 text-gray-800 border-b border-black">
+        {/* Sidebar toggle button */}
         <button
           aria-label="Toggle sidebar"
           onClick={onToggleSidebar}
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white shadow-sm hover:bg-gray-50"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition"
         >
           {open ? <PanelLeft size={18} /> : <PanelRight size={18} />}
         </button>
-      </div>
 
-      {/* Actions + Profile */}
-      <div className="flex items-center gap-0.5">
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 transition"
-          title="Messages"
-        >
-          <MessageSquareText size={18} />
-        </button>
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 transition"
-          title="Notifications"
-        >
-          <Bell size={18} />
-        </button>
-
-
-
-        {/* Profile section */}
-        <div ref={menuRef} className="relative ml-2">
+        {/* Right side actions */}
+        <div className="flex items-center gap-1">
           <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 transition"
+            className="rounded-md p-2 hover:bg-gray-100 transition"
+            title="Messages"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-indigo-200">
-              <UserIcon className="text-gray-800" size={20} />
-            </span>
-            <span className="hidden sm:block leading-tight text-left">
-              <span className="block text-sm font-semibold text-gray-900">
-                Jamaecha Dacanay
-              </span>
-              <span className="block text-[11px] text-gray-500 -mt-0.5">
-                Office Manager
-              </span>
-            </span>
+            <Inbox size={18} />
           </button>
 
-          {/* Dropdown */}
-          {menuOpen && (
-            <div
-              role="menu"
-              className="absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-md ring-1 ring-black/5"
+          <button
+            className="rounded-md p-2 hover:bg-gray-100 transition"
+            title="Notifications"
+          >
+            <Bell size={18} />
+          </button>
+
+          {/* Profile section */}
+          <div ref={menuRef} className="relative ml-2">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-gray-50 transition"
             >
-              <div className="px-3 py-2">
-                <div className="text-sm font-semibold text-emerald-700">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-emerald-100">
+                <UserCircle className="h-5 w-5 text-emerald-700" />
+              </span>
+              <span className="hidden sm:block leading-tight text-left">
+                <div className="text-[15px] font-semibold text-gray-900">
+                  Jamaecha Dacanay
+                </div>
+                <div className="text-[12px] text-gray-500">
+                  Office Manager
+                </div>
+              </span>
+            </button>
+
+            {/* Dropdown */}
+            {menuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-56 rounded-2xl border border-gray-200 bg-white text-slate-800 shadow-2xl z-50"
+                role="menu"
+              >
+                <div className="px-4 pb-2 pt-3 text-[15px] font-semibold text-emerald-700">
                   My Account
                 </div>
+                <div className="mx-4 h-px bg-neutral-200" />
+                <button
+                  onClick={logout}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-[15px] text-gray-800 hover:bg-gray-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </button>
               </div>
-              <hr />
-              <button
-                role="menuitem"
-                onClick={signOut}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-50"
-              >
-                <LogOut size={16} />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </header>

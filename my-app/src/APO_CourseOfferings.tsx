@@ -5,7 +5,7 @@ import {
   Bell,
   LogOut,
   Inbox,
-  Pencil,
+  Edit,
   Trash2,
   Users,
   Clock,
@@ -897,7 +897,7 @@ function CourseCard({
                       disabled={rowActionsDisabled}
                       className="text-gray-500 hover:text-black disabled:opacity-50"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => !rowActionsDisabled && confirmDelete(i)}

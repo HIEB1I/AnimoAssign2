@@ -7,8 +7,8 @@ import {
   BookOpen,
   BarChart3,
   FileText,
-  GitPullRequest,
-  RotateCcw,
+  FilePlus,
+  BookMarked,
 } from "lucide-react";
 import { cls } from "../utilities/cls";
 import AA_Logo from "../assets/Images/AA_Logo.png";
@@ -21,9 +21,9 @@ const items = [
   { to: "/faculty-management", label: "Faculty Management", Icon: Users },
   { to: "/course-offerings", label: "Course Offerings", Icon: BookOpen },
   { to: "/reports-analytics", label: "Reports and Analytics", Icon: BarChart3 },
-  { to: "/faculty-forms", label: "Faculty Forms", Icon: FileText },
-  { to: "/section-petitions", label: "Student Petitions", Icon: GitPullRequest },
-  { to: "/class-retention", label: "Class Retention", Icon: RotateCcw },
+  { to: "/faculty-forms", label: "Faculty Form", Icon: FileText },
+  { to: "/section-petitions", label: "Student Petition", Icon: FilePlus },
+  { to: "/class-retention", label: "Class Retention", Icon: BookMarked },
 ];
 
 export default function Sidebar({ open }: SidebarProps) {
