@@ -34,7 +34,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect (kept as-is) */}
-        <Route path="/" element={<Navigate to="/load-assignment" replace />} />
+        <Route path="/" element={<Navigate to="/faculty/screen" replace />} /> // /load-assignment
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
