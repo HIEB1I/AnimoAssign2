@@ -20,7 +20,7 @@ export default function AppShell({ children }: PropsWithChildren) {
     <div className="flex h-screen w-full bg-gray-50 text-gray-900">
       <Sidebar open={open} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onToggleSidebar={toggle} />
+        <Topbar open={open} onToggleSidebar={toggle} />
         <main className="flex-1 overflow-auto p-4">{children}</main>
       </div>
     </div>

@@ -1,3 +1,4 @@
+// src/base/Sidebar.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {
@@ -8,10 +9,10 @@ import {
   FileText,
   GitPullRequest,
   RotateCcw,
-  ChevronsLeftRight,
 } from "lucide-react";
 import { cls } from "../utilities/cls";
-import AA_Logo from "../assets/Images/AA_Logo.png"; // ← your logo
+import AA_Logo from "../assets/Images/AA_Logo.png";
+import loginBg from "../assets/Images/login_bg.png";
 
 type SidebarProps = { open: boolean; onToggle: () => void };
 
@@ -25,46 +26,29 @@ const items = [
   { to: "/class-retention", label: "Class Retention", Icon: RotateCcw },
 ];
 
-export default function Sidebar({ open, onToggle }: SidebarProps) {
+export default function Sidebar({ open }: SidebarProps) {
   return (
     <aside
       className={cls(
         "relative h-screen shrink-0 text-white",
-        "bg-[linear-gradient(180deg,#0F6C4F_0%,#1D8B63_100%)]",
+        "bg-cover bg-left bg-no-repeat",
         "transition-all duration-300 ease-in-out",
         open ? "w-72" : "w-16"
       )}
+      style={{ backgroundImage: `url(${loginBg})` }}
     >
-      {/* slider handle */}
-      <button
-        aria-label="Toggle sidebar"
-        onClick={onToggle}
-        className={cls(
-          "absolute -right-3 top-4 z-20 h-10 w-6 rounded-r-md shadow",
-          "bg-white/90 text-emerald-800 hover:bg-white"
-        )}
-        title="Slide menu"
-      >
-        <ChevronsLeftRight className="mx-auto" size={18} />
-      </button>
-
-      {/* Logo area */}
-      <div className="flex items-center gap-2 px-4 py-5">
+      {/* Logo */}
+      <div className={cls("flex items-center justify-center px-6 py-8", open ? "gap-2" : "justify-center")}>
         <img
           src={AA_Logo}
           alt="AnimoAssign"
-          className={cls("object-contain", open ? "h-9" : "h-8")}
+          className={cls("object-contain transition-all duration-300", open ? "h-12 w-auto" : "h-10 w-auto")}
         />
       </div>
 
-      {/* Sections */}
+      {/* Navigation */}
       <nav className="mt-1 px-3">
-        <p
-          className={cls(
-            "px-2 text-xs font-semibold uppercase tracking-wide text-emerald-100/90",
-            open ? "block" : "sr-only"
-          )}
-        >
+        <p className={cls("px-2 text-xs font-semibold uppercase tracking-wide text-white/90", open ? "block" : "sr-only")}>
           Main Navigation
         </p>
 
@@ -76,7 +60,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                 className={({ isActive }) =>
                   cls(
                     "group flex items-center gap-3 rounded-md px-3 py-2 text-[15px] font-semibold",
-                    isActive ? "bg-white/15" : "hover:bg-white/10"
+                    isActive ? "bg-white/20" : "hover:bg-white/10"
                   )
                 }
               >
@@ -87,14 +71,10 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
           ))}
         </ul>
 
-        <p
-          className={cls(
-            "mt-6 px-2 text-xs font-semibold uppercase tracking-wide text-emerald-100/90",
-            open ? "block" : "sr-only"
-          )}
-        >
+        <p className={cls("mt-6 px-2 text-xs font-semibold uppercase tracking-wide text-white/90", open ? "block" : "sr-only")}>
           Data Management
         </p>
+
         <ul className="mt-2 space-y-1">
           {items.slice(4).map(({ to, label, Icon }) => (
             <li key={to}>
@@ -103,7 +83,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                 className={({ isActive }) =>
                   cls(
                     "group flex items-center gap-3 rounded-md px-3 py-2 text-[15px] font-semibold",
-                    isActive ? "bg-white/15" : "hover:bg-white/10"
+                    isActive ? "bg-white/20" : "hover:bg-white/10"
                   )
                 }
               >
