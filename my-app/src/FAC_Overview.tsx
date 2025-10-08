@@ -744,71 +744,74 @@ function TeachingLoad() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {SAMPLE.map((day) => (
-              <div key={day.day}>
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-neutral-800">
-                  <CalIcon className="h-4 w-4" /> {day.day}
-                </div>
-                <div className="space-y-3">
-                  {day.items.map((it, idx) => (
-                    <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{it.code}</span>
-                            <Tag tone="gray">{it.sec}</Tag>
-                            <Tag tone={it.mode === "Hybrid" ? "amber" : it.mode === "Online" ? "blue" : "gray"}>
-                              {it.mode}
-                            </Tag>
-                            <Tag tone="emerald">
-                              <Check className="h-3 w-3" />
-                              {it.status}
-                            </Tag>
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-700">{it.title}</div>
-                        </div>
+  <div className="space-y-6">
+    {SAMPLE.map((day) => (
+      <div key={day.day}>
+        {/* Day header */}
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-neutral-800">
+          <CalIcon className="h-4 w-4" /> {day.day}
+        </div>
 
-                        {/* Top-right units removed as requested */}
-                      </div>
+        {/* Table container */}
+        <div className="overflow-x-auto rounded-xl border border-neutral-200">
+        <table className="min-w-full">
+            <thead>
+              <tr className="text-xs text-neutral-500">
+                {[
+                  "Course Code",
+                  "Course Title",
+                  "Section",
+                  "Units",
+                  "Campus",
+                  "Mode",
+                  "Day",
+                  "Room",
+                  "Time",
+                ].map((h) => (
+                  <th key={h} className="px-4 py-2 font-medium text-center">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-                      <div className="mt-3 grid grid-cols-1 items-center gap-3 text-sm text-neutral-600 sm:grid-cols-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {it.time}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4" />
-                          {day.day}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          {it.campus}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Monitor className="h-4 w-4" />
-                          {it.room}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          {it.units} units
-                        </div>
-                        <div className="flex justify-end">
-                          <button
-                            title="Request for change"
-                            className="grid h-10 w-10 place-items-center rounded-full bg-emerald-700 text-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] hover:brightness-110 active:scale-95"
-                            onClick={() => setModal({ day: day.day, item: it })}
-                          >
-                            <MessageSquareText className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+            <tbody>
+              {day.items.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-6 text-center text-sm text-neutral-500">
+                    No records.
+                  </td>
+                </tr>
+              ) : (
+                day.items.map((it, idx) => (
+                  <tr
+                    key={idx}
+                    className={cls(
+                      "text-sm text-neutral-800",
+                      idx % 2 === 0 ? "bg-white" : "bg-neutral-50"
+                    )}
+                  >
+                    <td className="px-4 py-2 text-center">{it.code}</td>
+                    <td className="px-4 py-2 text-center">{it.title}</td>
+                    <td className="px-4 py-2 text-center">{it.sec}</td>
+                    <td className="px-4 py-2 text-center">{it.units}</td>
+                    <td className="px-4 py-2 text-center">{it.campus}</td>
+                    <td className="px-4 py-2 text-center">
+                      {it.mode}
+                    </td>
+                    <td className="px-4 py-2 text-center">{day.day[0]}</td>
+                    <td className="px-4 py-2 text-center">{it.room}</td>
+                    <td className="px-4 py-2 text-center">{it.time.replace(" AM", "").replace(" PM", "")}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ))}
+  </div>
+
         )}
       </div>
 

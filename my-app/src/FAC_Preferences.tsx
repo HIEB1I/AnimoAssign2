@@ -30,6 +30,117 @@ function Tag({
   );
 }
 
+/* ---------- multi-select Dropdown (same styling) ---------- */
+function MultiSelectDropdown({
+  values,
+  onChange,
+  options,
+  className = "w-full",
+  placeholder = "— Select options —",
+  maxPreview = 2,
+}: {
+  values: string[];
+  onChange: (v: string[]) => void;
+  options: string[];
+  className?: string;
+  placeholder?: string;
+  maxPreview?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(0);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) =>
+      open &&
+      !btnRef.current?.contains(e.target as Node) &&
+      !listRef.current?.contains(e.target as Node) &&
+      setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const toggle = (opt: string) =>
+    onChange(values.includes(opt) ? values.filter((v) => v !== opt) : [...values, opt]);
+
+  const label =
+    values.length === 0
+      ? <span className="text-gray-400">{placeholder}</span>
+      : values.length <= maxPreview
+      ? values.join(", ")
+      : `${values.slice(0, maxPreview).join(", ")} +${values.length - maxPreview} more`;
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (!open && ["ArrowDown", "Enter", " "].includes(e.key)) {
+      e.preventDefault(); setOpen(true); return;
+    }
+    if (!open) return;
+    if (e.key === "Escape") { e.preventDefault(); setOpen(false); btnRef.current?.focus(); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setHover((i) => (i + 1) % options.length); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setHover((i) => (i - 1 + options.length) % options.length); }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(options[hover]); }
+  };
+
+  return (
+    <div className={cls("relative", className)} onKeyDown={onKey}>
+      <button
+        ref={btnRef}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={cls(
+          "w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-3 pr-10 text-left text-sm shadow-sm outline-none",
+          "hover:bg-gray-50 focus:ring-2 focus:ring-emerald-500/30"
+        )}
+      >
+        {label}
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">▾</span>
+      </button>
+
+      {open && (
+        <div
+          ref={listRef}
+          role="listbox"
+          className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-gray-300 bg-white shadow-lg"
+        >
+          {options.map((opt, i) => {
+            const checked = values.includes(opt);
+            return (
+              <button
+                key={opt}
+                role="option"
+                aria-selected={checked}
+                onMouseEnter={() => setHover(i)}
+                onClick={() => toggle(opt)}
+                className={cls(
+                  "flex w-full items-center gap-3 px-4 py-3 text-left text-sm",
+                  i === hover && "bg-emerald-50"
+                )}
+              >
+                <input type="checkbox" readOnly checked={checked} className="accent-emerald-700" />
+                <span>{opt}</span>
+              </button>
+            );
+          })}
+          {values.length > 0 && (
+            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2">
+              <button
+                className="text-xs text-emerald-700 hover:underline"
+                onClick={() => onChange([])}
+              >
+                Clear all
+              </button>
+              <span className="text-xs text-gray-500">{values.length} selected</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 /* ---------- local Dropdown (copied from History/Overview for consistency) ---------- */
 function Dropdown({
   value,
@@ -246,7 +357,7 @@ type SavedPrefs = {
   timeSlots: string[];
   campus: string;
   delivery: string;
-  kac: KACKey | "";
+  kac: KACKey[]; 
   courses: string[]; // derived from KAC
   remarks: string;
 };
@@ -260,7 +371,7 @@ const initialSaved: SavedPrefs = {
   timeSlots: ["7:30 AM - 9:00 AM", "12:45 PM - 2:15 PM"],
   campus: "Manila Campus",
   delivery: "Face-to-Face Only",
-  kac: "Object Oriented Programming And Software Design",
+  kac: ["Object Oriented Programming And Software Design"],
   courses: ["CCPROG1"], // just placeholder; final list set when KAC chosen in editor
   remarks: "I prefer all classes to be in Gokongwei",
 };
@@ -380,17 +491,18 @@ function EditForm({
 
   // when KAC changes, reset courses to empty if not in list
   const availableCourses = useMemo(
-  () => (form.kac ? KAC_COURSES[form.kac as KACKey] : []),
+  () => (form.kac.length ? form.kac.flatMap((k) => KAC_COURSES[k as KACKey]) : []),
   [form.kac]
-);
-
+  );
 
   useEffect(() => {
     setForm((f) => ({
       ...f,
       courses: f.courses.filter((c) => availableCourses.includes(c)),
     }));
-  }, [form.kac]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableCourses]);
+
 
   const toggleMulti = (key: "days" | "timeSlots" | "courses", value: string) =>
     setForm((f) => {
@@ -478,14 +590,15 @@ function EditForm({
           {/* KAC & courses */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Knowledge Area Cluster (KAC)</label>
-              <Dropdown
-                value={form.kac}
-                onChange={(v) => setForm({ ...form, kac: v as KACKey })}
-                options={KAC_OPTIONS}
-                placeholder="— Select KAC —"
-              />
-            </div>
+            <label className="mb-1 block text-sm font-medium">Knowledge Area Cluster (KAC)</label>
+            <MultiSelectDropdown
+              values={form.kac}
+              onChange={(v) => setForm({ ...form, kac: v as KACKey[] })}
+              options={KAC_OPTIONS}
+              placeholder="— Select one or more KACs —"
+            />
+          </div>
+
 
             <div>
               <label className="mb-1 block text-sm font-medium">Preferred Courses</label>
@@ -595,30 +708,29 @@ export function PreferencesContent() {
   const [openEdit, setOpenEdit] = useState(false);
 
   if (openEdit) {
-    const coherentInitial: SavedPrefs = {
-      ...saved,
-      courses:
-        saved.kac && saved.courses.length
-          ? saved.courses
-          : saved.kac
-          ? [KAC_COURSES[saved.kac as KACKey][0]]
-          : [],
-    };
+  const coherentInitial: SavedPrefs = {
+    ...saved,
+    courses: saved.courses.length
+      ? saved.courses
+      : saved.kac.length
+      ? [KAC_COURSES[saved.kac[0]][0]] // use first selected KAC
+      : [],
+  };
 
-    return (
-      <section className="mx-auto w-full max-w-screen-2xl px-4">
-        <EditForm
-          open={true}
-          initial={coherentInitial}
-          onClose={() => setOpenEdit(false)}
-          onSave={(v) => {
-            setSaved(v);
-            setOpenEdit(false);
-          }}
-        />
-      </section>
-    );
-  }
+  return (
+    <section className="mx-auto w-full max-w-screen-2xl px-4">
+      <EditForm
+        open={true}
+        initial={coherentInitial}
+        onClose={() => setOpenEdit(false)}
+        onSave={(v) => {
+          setSaved(v);
+          setOpenEdit(false);
+        }}
+      />
+    </section>
+  );
+}
 
   return (
     <section className="mx-auto w-full max-w-screen-2xl px-4">
@@ -689,13 +801,17 @@ export function PreferencesContent() {
                 <div className="font-semibold">Academic Specialization</div>
               </div>
               <div className="text-sm">
-                <div className="mb-1 text-neutral-700">Knowledge Areas</div>
-                <Tag tone="gray">{saved.kac || "—"}</Tag>
+              <div className="mb-1 text-neutral-700">Knowledge Areas</div>
+              <div className="flex flex-wrap gap-2">
+                {saved.kac.length ? saved.kac.map((k) => <Tag key={k} tone="gray">{k}</Tag>) : <span>—</span>}
               </div>
-              <div className="text-sm">
-                <div className="mb-1 mt-3 text-neutral-700">Preferred Courses</div>
-                <ChipRow items={saved.courses.length ? saved.courses : ["—"]} />
-              </div>
+            </div>
+
+            <div className="text-sm">
+              <div className="mb-1 mt-3 text-neutral-700">Preferred Courses</div>
+              <ChipRow items={saved.courses.length ? saved.courses : ["—"]} />
+            </div>
+
             </div>
           </SavedCard>
 
