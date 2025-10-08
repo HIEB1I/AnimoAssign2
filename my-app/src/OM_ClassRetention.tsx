@@ -106,7 +106,7 @@ const WorkflowChips = () => {
 };
 
 /* ---------------- Main ---------------- */
-export default function OM_ClassRet() {
+export default function OM_ClassRetention() {
   const [status, setStatus] = useState("All Status");
   const [search, setSearch] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
