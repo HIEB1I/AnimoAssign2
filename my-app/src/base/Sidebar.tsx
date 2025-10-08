@@ -19,10 +19,10 @@ type SidebarProps = { open: boolean; onToggle: () => void };
 const items = [
   { to: "/load-assignment", label: "Load Assignment", Icon: ListChecks },
   { to: "/faculty-management", label: "Faculty Management", Icon: Users },
-  { to: "/course-offerings", label: "Course Offerings", Icon: BookOpen },
+  { to: "/course-management", label: "Course Management", Icon: BookOpen },
   { to: "/reports-analytics", label: "Reports and Analytics", Icon: BarChart3 },
-  { to: "/faculty-forms", label: "Faculty Form", Icon: FileText },
-  { to: "/section-petitions", label: "Student Petition", Icon: FilePlus },
+  { to: "/faculty-form", label: "Faculty Form", Icon: FileText },
+  { to: "/student-petition", label: "Student Petition", Icon: FilePlus },
   { to: "/class-retention", label: "Class Retention", Icon: BookMarked },
 ];
 

@@ -22,12 +22,12 @@ import FAC_Overview from "./FAC_Overview";
 
 // Office Manager screens (kept directly under src/)
 import OM_LoadAssignment from "./OM_LoadAssignment";
-import OM_FacMgmt from "./OM_FacMgmt";
-import OM_CourseOfferings from "./OM_CourseOfferings";
-import OM_RepoAna from "./OM_RepoAna";
-import OM_FacForms from "./OM_FacForms";
-import OM_SecPet from "./OM_SecPet";
-import OM_ClassRet from "./OM_ClassRet";
+import OM_FacultyManagement from "./OM_FacultyManagement";
+import OM_CourseManagement from "./OM_CourseManagement";
+import OM_ReportAnalytics from "./OM_ReportAnalytics";
+import OM_FacultyForm from "./OM_FacultyForm";
+import OM_StudentPetition from "./OM_StudentPetition";
+import OM_ClassRetention from "./OM_ClassRetention";
 
 export default function App() {
   return (
@@ -71,12 +71,12 @@ export default function App() {
 
         {/* Office Manager routes (new) */}
         <Route path="/load-assignment" element={<OM_LoadAssignment />} />
-        <Route path="/faculty-management" element={<OM_FacMgmt />} />
-        <Route path="/course-offerings" element={<OM_CourseOfferings />} />
-        <Route path="/reports-analytics" element={<OM_RepoAna />} />
-        <Route path="/faculty-forms" element={<OM_FacForms />} />
-        <Route path="/section-petitions" element={<OM_SecPet />} />
-        <Route path="/class-retention" element={<OM_ClassRet />} />
+        <Route path="/faculty-management" element={<OM_FacultyManagement />} />
+        <Route path="/course-management" element={<OM_CourseManagement />} />
+        <Route path="/reports-analytics" element={<OM_ReportAnalytics />} />
+        <Route path="/faculty-form" element={<OM_FacultyForm />} />
+        <Route path="/student-petition" element={<OM_StudentPetition/>} />
+        <Route path="/class-retention" element={<OM_ClassRetention />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
