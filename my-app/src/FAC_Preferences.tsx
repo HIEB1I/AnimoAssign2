@@ -41,11 +41,12 @@ function MultiSelectDropdown({
 }: {
   values: string[];
   onChange: (v: string[]) => void;
-  options: string[];
+  options: readonly string[];   // ← change this line
   className?: string;
   placeholder?: string;
   maxPreview?: number;
 }) {
+
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -151,10 +152,11 @@ function Dropdown({
 }: {
   value: string;
   onChange: (v: string) => void;
-  options: string[];
+  options: readonly string[];   // ← change this line
   className?: string;
   placeholder?: string;
 }) {
+
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(() => Math.max(0, options.findIndex((o) => o === value)));
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -326,15 +328,16 @@ const OPT = {
   ],
   campus: ["Manila Campus", "Laguna Campus", "Either Campus"],
   days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  // ⬇︎ 24-hour format
   timeSlots: [
-    "7:30 AM - 9:00 AM",
-    "9:15 AM - 10:45 AM",
-    "11:00 AM - 12:30 PM",
-    "12:45 PM - 2:15 PM",
-    "2:30 PM - 4:00 PM",
-    "4:15 PM - 5:45 PM",
-    "6:00 PM - 7:30 PM",
-    "7:45 PM - 9:00 PM",
+    "07:30 - 09:00",
+    "09:15 - 10:45",
+    "11:00 - 12:30",
+    "12:45 - 14:15",
+    "14:30 - 16:00",
+    "16:15 - 17:45",
+    "18:00 - 19:30",
+    "19:45 - 21:00",
   ],
   deloading: [
     "Administrative",
@@ -344,37 +347,39 @@ const OPT = {
     "Research",
     "I have no deloading",
   ],
-  deloadUnits: ["3", "6", "9", "12"],
-};
+} as const;
+
 
 /* ---------- types & initial saved state (placeholders) ---------- */
 type SavedPrefs = {
   prefUnits: string;
   maxUnits: string;
-  deloading: string;
-  deloadUnits: string;
+  deloading: string[];           // CHANGED: array (multi-select)
+  deloadUnits: number | null;    // CHANGED: number input (nullable)
   days: string[];
   timeSlots: string[];
   campus: string;
   delivery: string;
-  kac: KACKey[]; 
-  courses: string[]; // derived from KAC
+  kac: KACKey[];
+  courses: string[];
   remarks: string;
 };
 
 const initialSaved: SavedPrefs = {
   prefUnits: "3",
   maxUnits: "15",
-  deloading: "Administrative",
-  deloadUnits: "3",
+  deloading: ["Administrative"],
+  deloadUnits: 3,
   days: ["Tuesday", "Friday", "Saturday"],
-  timeSlots: ["7:30 AM - 9:00 AM", "12:45 PM - 2:15 PM"],
+  // ⬇︎ 24-hour slots
+  timeSlots: ["07:30 - 09:00", "12:45 - 14:15"],
   campus: "Manila Campus",
   delivery: "Face-to-Face Only",
   kac: ["Object Oriented Programming And Software Design"],
-  courses: ["CCPROG1"], // just placeholder; final list set when KAC chosen in editor
+  courses: ["CCPROG1"],
   remarks: "I prefer all classes to be in Gokongwei",
 };
+
 
 /* ---------- small helpers ---------- */
 const ChipRow = ({ items }: { items: React.ReactNode[] }) => (
@@ -472,37 +477,26 @@ function AELine1Schedule() {
 
 
 /* ---------- Edit form (full-screen content area, NOT a modal) ---------- */
-function EditForm({
-  open,
-  onClose,
-  initial,
-  onSave,
-  scheduleImageUrl = "/mnt/data/513472d5-8882-41e1-9ac9-abc0b0190fa3.png",
-}: {
+function EditForm({ open, onClose, initial, onSave }: {
   open: boolean;
   initial: SavedPrefs;
   onClose: () => void;
   onSave: (v: SavedPrefs) => void;
-  scheduleImageUrl?: string;
 }) {
   if (!open) return null;
 
   const [form, setForm] = useState<SavedPrefs>(initial);
+  const showAE = ["Laguna Campus", "Either Campus"].includes(form.campus);
 
-  // when KAC changes, reset courses to empty if not in list
+
   const availableCourses = useMemo(
-  () => (form.kac.length ? form.kac.flatMap((k) => KAC_COURSES[k as KACKey]) : []),
-  [form.kac]
+    () => (form.kac.length ? form.kac.flatMap((k) => KAC_COURSES[k as KACKey]) : []),
+    [form.kac]
   );
 
   useEffect(() => {
-    setForm((f) => ({
-      ...f,
-      courses: f.courses.filter((c) => availableCourses.includes(c)),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setForm((f) => ({ ...f, courses: f.courses.filter((c) => availableCourses.includes(c)) }));
   }, [availableCourses]);
-
 
   const toggleMulti = (key: "days" | "timeSlots" | "courses", value: string) =>
     setForm((f) => {
@@ -511,7 +505,9 @@ function EditForm({
       return { ...f, [key]: next };
     });
 
-  const disabledDeloadUnits = form.deloading === "I have no deloading";
+  // --- CHANGED: disabled when "I have no deloading" is selected or none selected
+  const disabledDeloadUnits =
+    form.deloading.includes("I have no deloading") || form.deloading.length === 0;
 
   return (
     <div className="w-full">
@@ -523,7 +519,7 @@ function EditForm({
     </p>
     </div>
 
-     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(200px,400px)]">
+     <div className={cls("grid grid-cols-1 gap-6", showAE && "lg:grid-cols-[1fr_minmax(200px,400px)]")}>
         {/* Left column: form */}
         <div className="space-y-5 rounded-xl border border-neutral-200 bg-white p-5">
           {/* units */}
@@ -623,19 +619,35 @@ function EditForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_160px]">
             <div>
               <label className="mb-1 block text-sm font-medium">Deloading</label>
-              <Dropdown
-                value={form.deloading}
-                onChange={(v) => setForm({ ...form, deloading: v })}
-                options={OPT.deloading}
+              <MultiSelectDropdown
+                values={form.deloading}
+                onChange={(v) => {
+                  // if "I have no deloading" is chosen, force it as the only selection
+                  const none = v.includes("I have no deloading") ? ["I have no deloading"] : v.filter(x => x !== "I have no deloading");
+                  setForm((f) => ({
+                    ...f,
+                    deloading: none,
+                    deloadUnits: none.length === 0 || none.includes("I have no deloading") ? null : (f.deloadUnits ?? 0),
+                  }));
+                }}
+                options={OPT.deloading as unknown as string[]}
+                placeholder="— Select one or more —"
               />
             </div>
+
             <div>
               <label className="mb-1 block text-sm font-medium">Units</label>
-              <Dropdown
-                value={disabledDeloadUnits ? "" : form.deloadUnits}
-                onChange={(v) => setForm({ ...form, deloadUnits: v })}
-                options={OPT.deloadUnits}
-                placeholder={disabledDeloadUnits ? "— N/A —" : "— Select —"}
+              <input
+                type="number"
+                min={0}
+                step={1}
+                disabled={disabledDeloadUnits}
+                className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none disabled:bg-neutral-100"
+                placeholder={disabledDeloadUnits ? "— N/A —" : "Enter units"}
+                value={disabledDeloadUnits ? "" : (form.deloadUnits ?? "")}
+                onChange={(e) =>
+                  setForm({ ...form, deloadUnits: e.target.value === "" ? null : Number(e.target.value) })
+                }
               />
             </div>
           </div>
@@ -669,11 +681,12 @@ function EditForm({
           </div>
         </div>
 
-        {/* Right column: AE schedule (table) */}
-        <div className="block">
-        <AELine1Schedule />
-        </div>
-
+        {/* Right column: AE schedule (only when Laguna/Either) */}
+        {showAE && (
+          <div className="block">
+            <AELine1Schedule />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -757,12 +770,16 @@ export function PreferencesContent() {
               <div className="mt-3">Maximum Teaching Units</div>
               <div className="text-neutral-900">{saved.maxUnits}.0 units</div>
               <div className="mt-3">
-                <div className="text-neutral-700">Deloading</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <Tag tone="gray">{saved.deloading}</Tag>
-                  <span className="text-neutral-900">{saved.deloadUnits}.0 units</span>
-                </div>
+              <div className="text-neutral-700">Deloading</div>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {saved.deloading.length
+                  ? saved.deloading.map((d) => <Tag key={d} tone="gray">{d}</Tag>)
+                  : <Tag tone="gray">—</Tag>}
+                <span className="text-neutral-900">
+                  {saved.deloadUnits != null ? `${saved.deloadUnits}.0 units` : "—"}
+                </span>
               </div>
+            </div>
             </div>
             <div className="my-4 h-px w-full bg-neutral-200" />
             <div className="space-y-2">

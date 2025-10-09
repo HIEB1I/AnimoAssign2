@@ -193,7 +193,7 @@ function StickyTopNav({
 function StatCards() {
   const cards = [
     { title: "Teaching Units", value: "15/18", subtitleLeft: "Current Load", subtitleRight: "83%", progress: 83 },
-    { title: "Different Courses", value: "3/3", subtitleLeft: "Course Preps", subtitleRight: "100%", progress: 100 },
+    { title: "Course Prep", value: "3/3", subtitleLeft: "Course Preps", subtitleRight: "100%", progress: 100 },
     { title: "Load Status", value: "Confirmed", subtitleLeft: "Load Status", subtitleRight: "100%", progress: 100 },
   ];
   return (

@@ -34,7 +34,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect (kept as-is) */}
-        <Route path="/" element={<Navigate to="/faculty/screen" replace />} /> // /load-assignment
+        <Route path="/" element={<Navigate to="/load-assignment" replace />} /> // /load-assignment
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
@@ -57,6 +57,7 @@ export default function App() {
 
         {/* Office Assistant routes */}
         <Route path="/officeassistant/plantilla" element={<OA_Plantilla />} />
+        
         <Route path="/officeassistant/inbox" element={<OA_Inbox />} />
 
         {/* Dean routes */}
