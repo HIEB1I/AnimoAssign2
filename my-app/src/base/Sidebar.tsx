@@ -1,22 +1,15 @@
 // src/base/Sidebar.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  ListChecks,
-  Users,
-  BookOpen,
-  BarChart3,
-  FileText,
-  FilePlus,
-  BookMarked,
-} from "lucide-react";
+import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked, LucideIcon } from "lucide-react";
 import { cls } from "../utilities/cls";
 import AA_Logo from "../assets/Images/AA_Logo.png";
 import loginBg from "../assets/Images/login_bg.png";
 
-type SidebarProps = { open: boolean; onToggle: () => void };
+export type SidebarItem = { to: string; label: string; Icon: LucideIcon };
+type SidebarProps = { open: boolean; onToggle: () => void; items?: SidebarItem[] };
 
-const items = [
+const defaultItems: SidebarItem[] = [
   { to: "/load-assignment", label: "Load Assignment", Icon: ListChecks },
   { to: "/faculty-management", label: "Faculty Management", Icon: Users },
   { to: "/course-management", label: "Course Management", Icon: BookOpen },
@@ -26,7 +19,7 @@ const items = [
   { to: "/class-retention", label: "Class Retention", Icon: BookMarked },
 ];
 
-export default function Sidebar({ open }: SidebarProps) {
+export default function Sidebar({ open, items = defaultItems }: SidebarProps) {
   return (
     <aside
       className={cls(
@@ -37,7 +30,6 @@ export default function Sidebar({ open }: SidebarProps) {
       )}
       style={{ backgroundImage: `url(${loginBg})` }}
     >
-      {/* Logo */}
       <div className={cls("flex items-center justify-center px-6 py-8", open ? "gap-2" : "justify-center")}>
         <img
           src={AA_Logo}
@@ -46,7 +38,6 @@ export default function Sidebar({ open }: SidebarProps) {
         />
       </div>
 
-      {/* Navigation */}
       <nav className="mt-1 px-3">
         <p className={cls("px-2 text-xs font-semibold uppercase tracking-wide text-white/90", open ? "block" : "sr-only")}>
           Main Navigation

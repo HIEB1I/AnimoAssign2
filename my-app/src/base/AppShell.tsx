@@ -1,9 +1,18 @@
 // src/base/AppShell.tsx
 import React, { useEffect, useState, PropsWithChildren } from "react";
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
+import Sidebar, { SidebarItem } from "./Sidebar";
+import Topbar, { TopbarProps } from "./Topbar";
 
-export default function AppShell({ children }: PropsWithChildren) {
+export default function AppShell({
+  children,
+  topbarProfileName,
+  topbarProfileSubtitle,
+  sidebarItems,
+}: PropsWithChildren<{
+  topbarProfileName?: TopbarProps["profileName"];
+  topbarProfileSubtitle?: TopbarProps["profileSubtitle"];
+  sidebarItems?: SidebarItem[];
+}>) {
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -18,9 +27,14 @@ export default function AppShell({ children }: PropsWithChildren) {
 
   return (
     <div className="flex h-screen w-full bg-gray-50 text-gray-900">
-      <Sidebar open={open} onToggle={toggle} />
+      <Sidebar open={open} onToggle={toggle} items={sidebarItems} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar open={open} onToggleSidebar={toggle} />
+        <Topbar
+          open={open}
+          onToggleSidebar={toggle}
+          profileName={topbarProfileName}
+          profileSubtitle={topbarProfileSubtitle}
+        />
         <main className="flex-1 overflow-auto p-4">{children}</main>
       </div>
     </div>

@@ -677,15 +677,15 @@ export default function OM_LoadAssignment() {
   return (
     <AppShell>
       <main className="w-full px-8 py-8">
-        <header className="mb-6">
+        <header className="mb-6 flex items-start justify-between">
+        <div>
           <h1 className="text-2xl font-bold">
-            Load Assignment <span className="text-gray-400">|</span>{" "}
-            <span className="font-black">{term}</span>
+            Load Assignment <span className="text-gray-400">|</span> <span className="font-black">{term}</span>
           </h1>
-          <p className="text-sm text-gray-600">
-            Manage course assignments and faculty workload distribution
-          </p>
-        </header>
+          <p className="text-sm text-gray-600">Manage course assignments and faculty workload distribution</p>
+        </div>
+      </header>
+
 
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="relative flex-1 min-w-[260px]">

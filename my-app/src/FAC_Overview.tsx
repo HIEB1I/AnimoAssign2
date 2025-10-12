@@ -22,6 +22,23 @@ import {
   BookOpen, // for "units"
 } from "lucide-react";
 
+type Notification = { id: number; title: string; details: string; time: Date; seen?: boolean };
+const INITIAL_FAC_NOTIFS: Notification[] = [
+  { id: 1, title: "Load confirmed", details: "Your teaching load for T1 AY 2025-2026 is confirmed.", time: new Date(Date.now() - 8 * 60 * 1000), seen: false },
+  { id: 2, title: "Message from Office Manager", details: "Please review the updated section room.", time: new Date(Date.now() - 42 * 60 * 1000), seen: false },
+];
+const timeAgo = (d: Date) => {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} minutes ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} hours ago`;
+  const dd = Math.floor(h / 24);
+  return `${dd} day${dd > 1 ? "s" : ""} ago`;
+};
+
+
 /* ---------- utils ---------- */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
 
@@ -63,6 +80,19 @@ function FacultyTopBar({
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState(INITIAL_FAC_NOTIFS);
+  const hasUnseen = notifications.some(n => !n.seen);
+  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
+  const toggleNotif = () => { setNotifOpen(v => !v); if (!notifOpen) setNotifications(n => n.map(x => ({ ...x, seen: true }))); };
+  const notifRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => { if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false); };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -134,9 +164,28 @@ function FacultyTopBar({
             >
               <Inbox className="h-5 w-5" />
             </button>
-            <button className="rounded-md p-2 hover:bg-white/15" title="Notifications">
+            <div className="relative" ref={notifRef}>
+            <button onClick={toggleNotif} className="relative rounded-md p-2 hover:bg-white/15" title="Notifications">
               <Bell className="h-5 w-5" />
+              {hasUnseen && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />}
             </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
+                <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
+                <div className="max-h-96 overflow-y-auto">
+                  {sortedNotifs.length ? sortedNotifs.map((n) => (
+                    <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
+                      <div className="font-semibold text-slate-900">{n.title}</div>
+                      <div className="text-sm text-gray-600">{n.details}</div>
+                      <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
+                    </div>
+                  )) : <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>}
+                </div>
+              </div>
+            )}
+          </div>
+
           </div>
         </div>
         <div className="h-[2px] w-full bg-neutral-200/80" />
