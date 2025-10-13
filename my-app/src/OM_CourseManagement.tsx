@@ -79,10 +79,8 @@ function SelectBox({
 /* ---------------- Action Menu ---------------- */
 function ActionMenu({
   onViewSyllabus,
-  onViewDetails,
 }: {
   onViewSyllabus: () => void;
-  onViewDetails: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -113,15 +111,6 @@ function ActionMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             <FileText className="h-4 w-4" /> <span>View Syllabus</span>
-          </button>
-          <button
-            onClick={() => {
-              setOpen(false);
-              onViewDetails();
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            <BookOpen className="h-4 w-4" /> <span>Course Details</span>
           </button>
         </div>
       )}
@@ -228,7 +217,7 @@ export default function OM_CourseManagement() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
+        <div className="border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
@@ -270,10 +259,7 @@ export default function OM_CourseManagement() {
                   </td>
 
                   <td className="text-left">
-                    <ActionMenu
-                      onViewSyllabus={() => openModal("syllabus", r)}
-                      onViewDetails={() => openModal("details", r)}
-                    />
+                    <ActionMenu onViewSyllabus={() => openModal("syllabus", r)} />
                   </td>
                 </tr>
               ))}
@@ -282,79 +268,46 @@ export default function OM_CourseManagement() {
         </div>
 
         {/* Modal */}
-        {activeModal && selectedCourse && (
+        {activeModal === "syllabus" && selectedCourse && (
           <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
             <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
               <h2 className="text-lg font-semibold text-emerald-700 mb-4">
-                {activeModal === "details" ? "Course Details" : "Syllabus"}
+                Syllabus
               </h2>
 
-              {activeModal === "details" ? (
-                // 📘 Course Details View
-                <div className="grid grid-cols-2 gap-y-3 text-sm text-gray-800">
-                  <div>
-                    <p className="font-semibold text-gray-900">Course Code</p>
-                    <p>{selectedCourse.code}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Title</p>
-                    <p>{selectedCourse.title}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Units</p>
-                    <p>{selectedCourse.units}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Cluster</p>
-                    <p>{selectedCourse.cluster}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Coordinator</p>
-                    <p>{selectedCourse.coordinator}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Email</p>
-                    <p className="text-blue-700 underline">
-                      <a href={`mailto:${selectedCourse.email}`}>{selectedCourse.email}</a>
+              <div className="text-sm text-gray-700">
+                {selectedCourse.syllabus ? (
+                  <>
+                    <p className="mb-3">
+                      Syllabus Link:
+                      <a
+                        href={selectedCourse.syllabus}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-700 underline ml-2"
+                      >
+                        Open in New Tab
+                      </a>
                     </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold text-gray-900">Teaching Composition</p>
-                    {selectedCourse.composition.map((f, i) => (
-                      <p key={i}>{f}</p>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                // 📄 Syllabus View
-                <div className="text-sm text-gray-700">
-                  {selectedCourse.syllabus ? (
-                    <>
-                      <p className="mb-3">
-                        Syllabus Link:
-                        <a
-                          href={selectedCourse.syllabus}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-700 underline ml-2"
-                        >
-                          Open in New Tab
-                        </a>
-                      </p>
 
-                      {/* Try embedding if it’s a Google Drive file or PDF */}
-                      <iframe
-                        src={selectedCourse.syllabus.replace("/view?usp=sharing", "/preview")}
-                        title="Syllabus"
-                        className="w-full h-[500px] border rounded-xl"
-                      />
-                    </>
-                  ) : (
-                    <p className="text-gray-500 italic">No syllabus link provided.</p>
-                  )}
-                </div>
-              )}
+                    {/* 📄 Embedded syllabus viewer */}
+                    <iframe
+                      src={selectedCourse.syllabus.replace(
+                        "/view?usp=sharing",
+                        "/preview"
+                      )}
+                      title="Syllabus"
+                      className="w-full h-[500px] border rounded-xl"
+                    />
+                  </>
+                ) : (
+                  <p className="text-gray-500 italic">
+                    No syllabus link provided.
+                  </p>
+                )}
+              </div>
 
+              {/* Close button */}
               <div className="flex justify-end mt-6">
                 <button
                   onClick={closeModal}

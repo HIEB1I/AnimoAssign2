@@ -5,9 +5,11 @@ import {
   ChevronDown,
   Search,
   MoreVertical,
-  Edit,
   Eye,
-  Check,
+  GraduationCap,
+  MapPin,
+  Calendar,
+  BookOpen,
 } from "lucide-react";
 
 /* ---------------- SelectBox ---------------- */
@@ -84,11 +86,9 @@ function SelectBox({
 
 /* ---------------- Dropdown Menu ---------------- */
 function ActionMenu({
-  onEdit,
   onView,
   disabled,
 }: {
-  onEdit: () => void;
   onView: () => void;
   disabled?: boolean;
 }) {
@@ -122,15 +122,6 @@ function ActionMenu({
           <button
             onClick={() => {
               setOpen(false);
-              onEdit();
-            }}
-            className="flex w-full items-center justify-start gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            <Edit className="h-4 w-4" /> <span>Edit Status</span>
-          </button>
-          <button
-            onClick={() => {
-              setOpen(false);
               onView();
             }}
             className="flex w-full items-center justify-start gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -159,8 +150,6 @@ export default function OM_FacForms() {
   const [facultyType, setFacultyType] = useState("All Faculty Type");
   const [search, setSearch] = useState("");
   const [viewFaculty, setViewFaculty] = useState<Faculty | null>(null);
-  const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [tempStatus, setTempStatus] = useState<string>("");
 
   const departmentOptions = [
     "All Departments",
@@ -172,7 +161,7 @@ export default function OM_FacForms() {
   const statusOptions = ["All Status", "Submitted", "Not Submitted"];
   const facultyTypeOptions = ["All Faculty Type", "Full-Time", "Part-Time"];
 
-  const [data, setData] = useState<Faculty[]>([
+  const [data] = useState<Faculty[]>([
     {
       name: "CABREDO, RAFAEL ANGISCO",
       email: "rafael.cabredo@dlsu.edu.ph",
@@ -249,7 +238,7 @@ export default function OM_FacForms() {
         </div>
 
         {/* Table */}
-        <div className="relative rounded-xl border border-gray-200 bg-white shadow-sm overflow-visible pb-4">
+        <div className="border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
@@ -273,55 +262,19 @@ export default function OM_FacForms() {
                   <td className="text-center">{r.type}</td>
                   <td className="text-center">{r.date}</td>
                   <td className="text-center">
-                    {editingRow === r.name ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <SelectBox
-                          value={tempStatus}
-                          onChange={setTempStatus}
-                          options={["Submitted", "Not Submitted"]}
-                          className="text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <span
-                        className={cls(
-                          "inline-block rounded-full px-3 py-1 text-xs font-semibold",
-                          r.status === "Submitted"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-700"
-                        )}
-                      >
-                        {r.status}
-                      </span>
-                    )}
+                    <span
+                      className={cls(
+                        "inline-block rounded-full px-3 py-1 text-xs font-semibold",
+                        r.status === "Submitted"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-gray-100 text-gray-700"
+                      )}
+                    >
+                      {r.status}
+                    </span>
                   </td>
                   <td className="text-center">
-                    {editingRow === r.name ? (
-                      <button
-                        onClick={() => {
-                          setData((prev) =>
-                            prev.map((row) =>
-                              row.name === r.name
-                                ? { ...row, status: tempStatus }
-                                : row
-                            )
-                          );
-                          setEditingRow(null);
-                        }}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
-                      >
-                        <Check className="h-4 w-4" strokeWidth={2.5} />
-                      </button>
-                    ) : (
-                      <ActionMenu
-                        onEdit={() => {
-                          setEditingRow(r.name);
-                          setTempStatus(r.status);
-                        }}
-                        onView={() => setViewFaculty(r)}
-                        disabled={!!editingRow && editingRow !== r.name}
-                      />
-                    )}
+                    <ActionMenu onView={() => setViewFaculty(r)} disabled={false} />
                   </td>
                 </tr>
               ))}
@@ -343,23 +296,25 @@ export default function OM_FacForms() {
                 </p>
 
                 <div className="grid grid-cols-2 gap-x-10 gap-y-6 text-sm">
+                  {/* Teaching Load */}
                   <div>
-                    <h4 className="font-semibold flex items-center gap-1 mb-2">
-                      <span>🎓</span> Teaching Load
+                    <h4 className="font-semibold flex items-center gap-2 mb-2 text-gray-800">
+                      <GraduationCap className="h-4 w-4 text-emerald-700" />
+                      Teaching Load
                     </h4>
                     <p>Preferred Teaching Units</p>
                     <p className="text-gray-500">3.0 units</p>
                     <p className="mt-1">Maximum Teaching Units</p>
                     <p className="text-gray-500">6.0 units</p>
                     <p className="mt-1">Deloading</p>
-                    <p className="text-gray-500">
-                      Administrative (3 units)
-                    </p>
+                    <p className="text-gray-500">Administrative (3 units)</p>
                   </div>
 
+                  {/* Location and Mode */}
                   <div>
-                    <h4 className="font-semibold flex items-center gap-1 mb-2">
-                      <span>📍</span> Location and Mode
+                    <h4 className="font-semibold flex items-center gap-2 mb-2 text-gray-800">
+                      <MapPin className="h-4 w-4 text-emerald-700" />
+                      Location and Mode
                     </h4>
                     <p>Campus</p>
                     <p className="text-gray-500">Manila</p>
@@ -367,32 +322,30 @@ export default function OM_FacForms() {
                     <p className="text-gray-500">Hybrid</p>
                   </div>
 
+                  {/* Schedule */}
                   <div>
-                    <h4 className="font-semibold flex items-center gap-1 mb-2">
-                      <span>🗓️</span> Schedule
+                    <h4 className="font-semibold flex items-center gap-2 mb-2 text-gray-800">
+                      <Calendar className="h-4 w-4 text-emerald-700" />
+                      Schedule
                     </h4>
                     <p>Days</p>
-                    <p className="text-gray-500">
-                      Tuesday, Friday, Saturday
-                    </p>
+                    <p className="text-gray-500">Tuesday, Friday, Saturday</p>
                     <p className="mt-1">Time Slots</p>
                     <p className="text-gray-500">
                       7:30–9:00, 12:45–14:15, 14:30–16:00
                     </p>
                   </div>
 
+                  {/* Academic Specialization */}
                   <div>
-                    <h4 className="font-semibold flex items-center gap-1 mb-2">
-                      <span>📘</span> Academic Specialization
+                    <h4 className="font-semibold flex items-center gap-2 mb-2 text-gray-800">
+                      <BookOpen className="h-4 w-4 text-emerald-700" />
+                      Academic Specialization
                     </h4>
                     <p>Knowledge Area</p>
-                    <p className="text-gray-500">
-                      Computer Programming
-                    </p>
+                    <p className="text-gray-500">Computer Programming</p>
                     <p className="mt-1">Courses</p>
-                    <p className="text-gray-500">
-                      CCPROG1, CCPROG2, CCPROG3
-                    </p>
+                    <p className="text-gray-500">CCPROG1, CCPROG2, CCPROG3</p>
                   </div>
                 </div>
 

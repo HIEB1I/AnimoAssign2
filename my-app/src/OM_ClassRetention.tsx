@@ -141,7 +141,17 @@ export default function OM_ClassRetention() {
       facUnits: 3,
       enrolled: 6,
       faculty: "CU, GREGORY",
-      status: "Rejected",
+      status: "Dissolved",
+    },
+    {
+      course: "ITDBADM",
+      title: "Database Management",
+      section: "S14",
+      stuUnits: 3,
+      facUnits: 3,
+      enrolled: 1,
+      faculty: "GONDA, RAPHAEL",
+      status: "Special Class",
     },
   ];
 
@@ -158,8 +168,7 @@ export default function OM_ClassRetention() {
         <header className="mb-6">
           <h1 className="text-2xl font-bold">Class Retention</h1>
           <p className="text-sm text-gray-600">
-            Manage class retention requests for low-enrollment courses for Term
-            1 AY 2025–2026
+            Manage class retention requests for low-enrollment courses for Term 1 AY 2025–2026
           </p>
           <WorkflowChips />
         </header>
@@ -179,7 +188,13 @@ export default function OM_ClassRetention() {
           <SelectBox
             value={status}
             onChange={setStatus}
-            options={["All Status", "Approved", "Under Review", "Rejected"]}
+            options={[
+              "All Status",
+              "Approved",
+              "Under Review",
+              "Dissolved",
+              "Special Class",
+            ]}
           />
 
           <button
@@ -204,7 +219,7 @@ export default function OM_ClassRetention() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
@@ -266,6 +281,8 @@ export default function OM_ClassRetention() {
                           ? "bg-green-100 text-green-700"
                           : r.status === "Under Review"
                           ? "bg-yellow-100 text-yellow-700"
+                          : r.status === "Special Class"
+                          ? "bg-blue-100 text-blue-700"
                           : "bg-red-100 text-red-700"
                       )}
                     >

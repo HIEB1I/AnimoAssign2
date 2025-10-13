@@ -235,9 +235,9 @@ export default function OfficeAssistant_Plantilla() {
   const [body, setBody] = useState("");
   const plantillaFile = "Faculty_Plantilla_CCS_IT_AY2025-2026_1stTerm.pdf";
 
-  const handleApprove = () => {
+  const handleRequestApproval = () => {
     setShowApprovePrompt(false);
-    alert("✅ Faculty Plantilla successfully approved and forwarded!");
+    alert("📨 Faculty Plantilla successfully sent for approval!");
   };
 
   const handleViewPlantilla = () => {
@@ -288,13 +288,13 @@ export default function OfficeAssistant_Plantilla() {
 
         {/* Action buttons */}
         <div className="flex items-center justify-end gap-3 mt-6">
-          <button
-            onClick={() => setShowApprovePrompt(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
-          >
-            <CheckCheck className="h-4 w-4" />
-            Approve
-          </button>
+        <button
+          onClick={() => setShowApprovePrompt(true)}
+          className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
+        >
+          <CheckCheck className="h-4 w-4" />
+          Request for Approval
+        </button>
           <button
             onClick={() => setShowMessagePrompt(true)}
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
@@ -311,10 +311,11 @@ export default function OfficeAssistant_Plantilla() {
               <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
                 <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
-              <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
+              <h3 className="mb-2 text-center text-2xl font-semibold">Send Request for Approval?</h3>
               <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
                 Please confirm that this is the final{" "}
-                <span className="font-semibold">Faculty Plantilla</span> to be submitted to the{" "}
+                <span className="font-semibold">Faculty Plantilla</span> to be{" "}
+                <span className="font-semibold">requested for approval</span> by the{" "}
                 <span className="font-semibold">Department Chair</span> for faculty loading.
                 Once submitted, this action cannot be undone.
               </p>
@@ -326,10 +327,10 @@ export default function OfficeAssistant_Plantilla() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleApprove}
+                  onClick={handleRequestApproval}
                   className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                 >
-                  Yes, I Approve
+                  Yes, Request Approval
                 </button>
               </div>
             </div>

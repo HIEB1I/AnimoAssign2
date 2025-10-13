@@ -248,7 +248,7 @@ export default function OM_FacultyManagement() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
+        <div className="border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
@@ -328,7 +328,7 @@ export default function OM_FacultyManagement() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Course Coordinator</p>
-                      <p className="text-gray-600">CCPROG3</p>
+                      <p className="text-gray-600">CCPROG3, ADFUND</p>
                     </div>
                   </div>
                   <h3 className="text-md font-semibold flex items-center gap-2 mb-2 text-gray-900">
@@ -345,97 +345,107 @@ export default function OM_FacultyManagement() {
               )}
 
               {activeModal === "schedule" && (
-              <>
-                <h2 className="text-lg font-semibold text-emerald-700 mb-6">
-                  Faculty Schedule
-                </h2>
+                <>
+                  <h2 className="text-lg font-semibold text-emerald-700 mb-6">
+                    Faculty Schedule
+                  </h2>
 
-                {[
-                  {
-                    code: "CCPROG3",
-                    title: "Object-Oriented Programming",
-                    sections: [
+                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                    {[
                       {
-                        id: "S11",
-                        slots: [
-                          { day: "M", time: "7:30–9:00 AM", room: "ONLINE" },
-                          { day: "H", time: "7:30–9:00 AM", room: "GK306A" },
+                        day: "Monday",
+                        entries: [
+                          {
+                            code: "CSMODEL",
+                            section: "S12",
+                            campus: "Manila",
+                            room: "Online",
+                            time: "7:30–9:00",
+                          },
+                          {
+                            code: "CSMODEL",
+                            section: "S13",
+                            campus: "Manila",
+                            room: "Online",
+                            time: "9:15–10:45",
+                          },
                         ],
-                        mode: "HYBRID",
-                        students: 20,
                       },
                       {
-                        id: "S12",
-                        slots: [
-                          { day: "S", time: "7:30–9:00 AM", room: "ONLINE" },
-                          { day: "S", time: "9:15–10:45 AM", room: "ONLINE" },
+                        day: "Thursday",
+                        entries: [
+                          {
+                            code: "CSMODEL",
+                            section: "S12",
+                            campus: "Manila",
+                            room: "GK210",
+                            time: "7:30–9:00",
+                          },
+                          {
+                            code: "CSMODEL",
+                            section: "S13",
+                            campus: "Manila",
+                            room: "GK211",
+                            time: "9:15–10:45",
+                          },
                         ],
-                        mode: "FOL",
-                        students: 20,
                       },
-                    ],
-                  },
-                  {
-                    code: "CBINTSY",
-                    title: "Introduction to Intelligent Systems",
-                    sections: [
-                      {
-                        id: "S13",
-                        slots: [
-                          { day: "T", time: "7:30–9:00 AM", room: "ONLINE" },
-                          { day: "F", time: "7:30–9:00 AM", room: "GK306A" },
-                        ],
-                        mode: "HYBRID",
-                        students: 20,
-                      },
-                      {
-                        id: "S14",
-                        slots: [
-                          { day: "S", time: "7:30–9:00 AM", room: "ONLINE" },
-                          { day: "S", time: "9:15–10:45 AM", room: "ONLINE" },
-                        ],
-                        mode: "FOL",
-                        students: 20,
-                      },
-                    ],
-                  },
-                ].map((course) => (
-                  <div key={course.code} className="border rounded-xl p-4 mb-4">
-                    <h3 className="font-semibold text-emerald-700">{course.code}</h3>
-                    <p className="text-sm mb-3">{course.title}</p>
-                    <div className="grid gap-2">
-                      {course.sections.map((section) => (
-                          <div
-                            key={section.id}
-                            className="flex flex-wrap items-center justify-between rounded-lg px-3 py-2 text-sm bg-gray-50"
-                          >
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="font-semibold">{section.id}</span>
-                            {section.slots.map((slot, i) => (
-                              <div key={i} className="flex items-center gap-2 text-gray-600">
-                                <Calendar className="h-3 w-3" />
-                                <span>
-                                  {slot.day} {slot.time}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" /> {slot.room}
-                                </span>
-                              </div>
-                            ))}
+                    ]
+                      // Sort days chronologically (Mon → Sat)
+                      .sort(
+                        (a, b) =>
+                          ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(a.day) -
+                          ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(b.day)
+                      )
+                      .map(({ day, entries }) => (
+                        <div
+                          key={day}
+                          className="rounded-xl border border-gray-200 mb-6 overflow-hidden"
+                        >
+                          {/* 🟩 Header styled like “Term 1” */}
+                          <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">
+                            {day}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-800">{section.mode}</span>
-                            <span className="flex items-center gap-1 text-gray-600">
-                              <Users className="h-3 w-3" /> {section.students}
-                            </span>
+
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide border-b">
+                                <tr>
+                                  {["Course Code", "Section", "Campus", "Room", "Time"].map((h) => (
+                                    <th
+                                      key={h}
+                                      className="px-3 py-2 text-center font-medium whitespace-nowrap"
+                                    >
+                                      {h}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {entries.map((row, i) => (
+                                  <tr
+                                    key={`${day}-${row.section}-${i}`}
+                                    className={cls(
+                                      i % 2 === 0 ? "bg-white" : "bg-gray-50",
+                                      "text-gray-800"
+                                    )}
+                                  >
+                                    <td className="px-3 py-2 text-center">{row.code}</td>
+                                    <td className="px-3 py-2 text-center">{row.section}</td>
+                                    <td className="px-3 py-2 text-center">{row.campus}</td>
+                                    <td className="px-3 py-2 text-center">{row.room}</td>
+                                    <td className="px-3 py-2 text-center">{row.time}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       ))}
-                    </div>
                   </div>
-                ))}
-              </>
-            )}
+                </>
+              )}
+
             {activeModal === "history" && (
               <>
                 <h2 className="text-lg font-semibold text-emerald-700 mb-6">

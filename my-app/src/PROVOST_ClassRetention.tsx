@@ -321,7 +321,7 @@ export default function Provost_ClassRetention() {
   const data = [
     { course: "CCPROG3", title: "Object-Oriented Programming", section: "S16", stuUnits: 3, facUnits: 3, enrolled: 12, faculty: "BEREDO, JACKLYN L.", status: "Approved" },
     { course: "STCLOUD", title: "Cloud Computing", section: "S14", stuUnits: 3, facUnits: 3, enrolled: 10, faculty: "FLORES, FRITZ KEVIN", status: "Under Review" },
-    { course: "CSMODEL", title: "Discrete Structures", section: "S11", stuUnits: 3, facUnits: 3, enrolled: 6, faculty: "CU, GREGORY", status: "Rejected" },
+    { course: "CSMODEL", title: "Discrete Structures", section: "S11", stuUnits: 3, facUnits: 3, enrolled: 6, faculty: "CU, GREGORY", status: "Dissolved" },
   ];
 
   const filtered = data.filter(
@@ -360,7 +360,7 @@ export default function Provost_ClassRetention() {
           <SelectBox
             value={status}
             onChange={setStatus}
-            options={["All Status", "Approved", "Under Review", "Rejected"]}
+            options={["All Status", "Approved", "Under Review", "Special Class", "Dissolved"]}
           />
 
           <button
@@ -442,7 +442,9 @@ export default function Provost_ClassRetention() {
                           ? "bg-green-100 text-green-700"
                           : r.status === "Under Review"
                           ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                          : r.status === "Special Class"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-red-100 text-red-700" 
                       )}
                     >
                       {r.status}

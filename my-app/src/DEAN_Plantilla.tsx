@@ -244,7 +244,7 @@ function DepartmentPlantilla({
   const [body, setBody] = useState("");
   const tableRef = useRef<HTMLTableElement | null>(null);
 
-  const handleApprove = () => {
+  const handleRequestApproval = () => {
     setShowApprovePrompt(false);
     alert(`✅ Faculty Plantilla for ${deptLabel} successfully approved and forwarded!`);
   };
@@ -294,7 +294,7 @@ function DepartmentPlantilla({
           className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           <CheckCheck className="h-4 w-4" />
-          Approve
+          Request for Approval
         </button>
         <button
           onClick={() => setShowMessagePrompt(true)}
@@ -312,11 +312,11 @@ function DepartmentPlantilla({
             <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
               <Check className="h-8 w-8" strokeWidth={2.5} />
             </div>
-            <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
+            <h3 className="mb-2 text-center text-2xl font-semibold">Send Request for Approval?</h3>
             <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
               Please confirm that this is the final <span className="font-semibold">Faculty Plantilla</span> for{" "}
-              <span className="font-semibold">{deptLabel}</span> to be submitted to the{" "}
-              <span className="font-semibold">Provost</span> for faculty loading. Once submitted, this action cannot be undone.
+              <span className="font-semibold">{deptLabel}</span> to be <span className="font-semibold">requested for approval</span> by the{" "}
+              <span className="font-semibold">Provost</span>. Once sent, this action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -326,10 +326,10 @@ function DepartmentPlantilla({
                 Cancel
               </button>
               <button
-                onClick={handleApprove}
+                onClick={handleRequestApproval}
                 className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
               >
-                Yes, I Approve
+                Yes, Request Approval
               </button>
             </div>
           </div>
@@ -417,7 +417,7 @@ function DepartmentPlantilla({
         </div>
       )}
 
-      {/* EXACT ORIGINAL TABLE (unchanged) */}
+      {/* Table */}
       <div className="mt-8 w-full overflow-x-auto border border-gray-300 bg-white shadow-sm rounded-lg">
         <table ref={tableRef} className="w-full text-sm border-collapse border border-gray-300">
           <thead>
