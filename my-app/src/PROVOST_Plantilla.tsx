@@ -208,21 +208,20 @@ const WorkflowChips = () => {
     "Office Assistant",
     "Provost",
   ];
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
       {steps.map((step, i) => (
-        <React.Fragment key={step}>
+        <React.Fragment key={`${step}-${i}`}>
           <span
             className={cls(
               "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "Provost"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
+              "border-emerald-700 bg-emerald-700 text-white" // all green
             )}
           >
             {step}
           </span>
-          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
+          {i < steps.length - 1 && <span className="text-emerald-600">—</span>}
         </React.Fragment>
       ))}
     </div>

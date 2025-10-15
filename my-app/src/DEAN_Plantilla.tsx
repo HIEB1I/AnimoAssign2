@@ -208,26 +208,38 @@ const WorkflowChips = () => {
     "Office Assistant",
     "Provost",
   ];
+
+  // highlight range: first "APO" -> first "Dean" after that
+  const startIdx = steps.findIndex((s) => s === "APO");
+  const endIdx = steps.indexOf("Dean", Math.max(0, startIdx));
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
-      {steps.map((step, i) => (
-        <React.Fragment key={step}>
-          <span
-            className={cls(
-              "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "Dean"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
+      {steps.map((step, i) => {
+        const isGreen = startIdx !== -1 && endIdx !== -1 && i >= startIdx && i <= endIdx;
+        const dashGreen = startIdx !== -1 && endIdx !== -1 && i >= startIdx && i < endIdx;
+        return (
+          <React.Fragment key={`${step}-${i}`}>
+            <span
+              className={cls(
+                "rounded-full px-3 py-1 text-[13px] font-medium border",
+                isGreen
+                  ? "border-emerald-700 bg-emerald-700 text-white"
+                  : "border-gray-300 bg-white text-gray-800"
+              )}
+            >
+              {step}
+            </span>
+            {i < steps.length - 1 && (
+              <span className={dashGreen ? "text-emerald-600" : "text-gray-400"}>—</span>
             )}
-          >
-            {step}
-          </span>
-          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };
+
 
 /* ----------------------- Department Plantilla (ST / CT) ----------------------- */
 function DepartmentPlantilla({

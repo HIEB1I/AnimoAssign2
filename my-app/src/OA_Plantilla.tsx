@@ -205,23 +205,31 @@ const WorkflowChips = () => {
     "Office Assistant",
     "Provost",
   ];
+
+  const firstOAIndex = steps.indexOf("Office Assistant");
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
-      {steps.map((step, i) => (
-        <React.Fragment key={step}>
-          <span
-            className={cls(
-              "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "Office Assistant"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
+      {steps.map((step, i) => {
+        const isHighlighted = firstOAIndex !== -1 && i <= firstOAIndex; // APO → ... → first OA
+        return (
+          <React.Fragment key={`${step}-${i}`}>
+            <span
+              className={cls(
+                "rounded-full px-3 py-1 text-[13px] font-medium border",
+                isHighlighted
+                  ? "border-emerald-700 bg-emerald-700 text-white"
+                  : "border-gray-300 bg-white text-gray-800"
+              )}
+            >
+              {step}
+            </span>
+            {i < steps.length - 1 && (
+              <span className={isHighlighted ? "text-emerald-600" : "text-gray-400"}>—</span>
             )}
-          >
-            {step}
-          </span>
-          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };

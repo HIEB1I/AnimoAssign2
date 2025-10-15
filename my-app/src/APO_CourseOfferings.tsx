@@ -73,32 +73,42 @@ type Course = {
   sections: SectionRow[];
 };
 
-/* tag color helper */
+/* tag color helper (HEX with Tailwind arbitrary values) */
 const tagColor = (t: string) => {
   const map: Record<string, string> = {
-    Undergraduate: "bg-green-100 text-green-700",
-    Graduate: "bg-green-100 text-green-700",
-    "Senior High School": "bg-green-100 text-green-700",
-    "Department of Software Technology": "bg-amber-100 text-amber-700",
-    "Department of Information Technology": "bg-amber-100 text-amber-700",
-    "Department of Computer Technology": "bg-amber-100 text-amber-700",
-    "ID 120": "bg-violet-100 text-violet-700",
-    "ID 121": "bg-violet-100 text-violet-700",
-    "ID 122": "bg-violet-100 text-violet-700",
-    "ID 123": "bg-violet-100 text-violet-700",
-    "ID 124": "bg-violet-100 text-violet-700",
-    "ID 125": "bg-violet-100 text-violet-700",
-    "BSCS-ST": "bg-pink-100 text-pink-700",
-    "BSCS-NIS": "bg-pink-100 text-pink-700",
-    "BSCS-CSE": "bg-pink-100 text-pink-700",
-    "BSMS-CS": "bg-pink-100 text-pink-700",
-    "BS IET-GD": "bg-pink-100 text-pink-700",
-    "BS IET-AD": "bg-pink-100 text-pink-700",
-    "BSIT": "bg-pink-100 text-pink-700",
-    "BSIS": "bg-pink-100 text-pink-700",
-    Unassigned: "bg-red-100 text-red-700",
+    // light sage bg → dark ink text
+    Undergraduate:       "bg-[#C2CEA7] text-[#2E3D31]",
+    Graduate:            "bg-[#C2CEA7] text-[#2E3D31]",
+    "Senior High School":"bg-[#C2CEA7] text-[#2E3D31]",
+
+    // medium sage bg → white text
+    "Department of Software Technology": "bg-[#88A376] text-[#FFFFFF]",
+    "Department of Information Technology": "bg-[#88A376] text-[#FFFFFF]",
+    "Department of Computer Technology": "bg-[#88A376] text-[#FFFFFF]",
+
+    // same bg as above per your snippet → white text for contrast
+    "ID 120": "bg-[#a6b697] text-[#FFFFFF]",
+    "ID 121": "bg-[#a6b697] text-[#FFFFFF]",
+    "ID 122": "bg-[#a6b697] text-[#FFFFFF]",
+    "ID 123": "bg-[#a6b697] text-[#FFFFFF]",
+    "ID 124": "bg-[#a6b697] text-[#FFFFFF]",
+    "ID 125": "bg-[#a6b697] text-[#FFFFFF]",
+
+    // slightly different sage bg → white text
+    "BSCS-ST": "bg-[#88A78E] text-[#FFFFFF]",
+    "BSCS-NIS": "bg-[#88A78E] text-[#FFFFFF]",
+    "BSCS-CSE": "bg-[#88A78E] text-[#FFFFFF]",
+    "BSMS-CS": "bg-[#88A78E] text-[#FFFFFF]",
+    "BS IET-GD": "bg-[#88A78E] text-[#FFFFFF]",
+    "BS IET-AD": "bg-[#88A78E] text-[#FFFFFF]",
+    "BSIT": "bg-[#88A78E] text-[#FFFFFF]",
+    "BSIS": "bg-[#88A78E] text-[#FFFFFF]",
+
+    // your original non-sage red is already readable
+    Unassigned: "bg-[#FEE2E2] text-[#B91C1C]",
   };
-  return map[t] || "bg-gray-100 text-gray-700";
+  // sensible default: light sage bg + dark ink text
+  return map[t] || "bg-[#CFDBB8] text-[#2E3D31]";
 };
 
 /* ----------------------- Top Bar ----------------------- */
@@ -954,28 +964,35 @@ const WorkflowChips = () => {
     "Office Assistant",
     "Provost",
   ];
+
+  let seenFirstApo = false; // will flip true after the first APO
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
-      {steps.map((step, i) => (
-        <React.Fragment key={step}>
-          <span
-            className={cls(
-              "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "APO"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
-            )}
-          >
-            {step}
-          </span>
-          {i < steps.length - 1 && (
-            <span className="text-gray-400">—</span>
-          )}
-        </React.Fragment>
-      ))}
+      {steps.map((step, i) => {
+        const isFirstApo = step === "APO" && !seenFirstApo;
+        if (isFirstApo) seenFirstApo = true;
+
+        return (
+          <React.Fragment key={`${step}-${i}`}>
+            <span
+              className={cls(
+                "rounded-full px-3 py-1 text-[13px] font-medium border",
+                isFirstApo
+                  ? "border-emerald-700 bg-emerald-700 text-white" // only the first APO
+                  : "border-gray-300 bg-white text-gray-800"
+              )}
+            >
+              {step}
+            </span>
+            {i < steps.length - 1 && <span className="text-gray-400">—</span>}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };
+
 
 // --- Simple CSV parser that respects quotes and newlines ---
 function parseCSV(text: string): string[][] {
