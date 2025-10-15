@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./Login";
+
+// Login
+import Login from "./pages/Login";
 
 // Admin screens
-import ADMIN_Screen from "./ADMIN_Screen";
-import ADMIN_Inbox from "./ADMIN_Inbox";
+import ADMIN_Screen from "./pages/ADMIN/ADMIN_Screen";
+import ADMIN_Inbox from "./pages/ADMIN/ADMIN_Inbox";
 
 // Student screens
-import STUDENT_Screen from "./STUDENT_Screen";
+import STUDENT_Screen from "./pages/STUDENT/STUDENT_Screen";
 
 // APO screens
 import APO_PreEnlistment from "./pages/APO/APO_PreEnlistment";
@@ -15,49 +17,48 @@ import APO_RoomAllocation from "./pages/APO/APO_RoomAllocation";
 import APO_Inbox from "./pages/APO/APO_Inbox";
 
 // Office Assistant screens
-import OA_Plantilla from "./OA_Plantilla";
-import OA_Inbox from "./OA_Inbox";
+import OA_Plantilla from "./pages/OA/OA_Plantilla";
+import OA_Inbox from "./pages/OA/OA_Inbox";
 
 // Dean screens
-import DEAN_Plantilla from "./DEAN_Plantilla";
-import DEAN_ClassRetention from "./DEAN_ClassRetention";
-import DEAN_Inbox from "./DEAN_Inbox";
+import DEAN_Plantilla from "./pages/DEAN/DEAN_Plantilla";
+import DEAN_ClassRetention from "./pages/DEAN/DEAN_ClassRetention";
+import DEAN_Inbox from "./pages/DEAN/DEAN_Inbox";
 
 // Provost screens
-import PROVOST_Plantilla from "./PROVOST_Plantilla";
-import PROVOST_ClassRetention from "./PROVOST_ClassRetention";
-import PROVOST_Inbox from "./PROVOST_Inbox";
+import PROVOST_Plantilla from "./pages/PROVOST/PROVOST_Plantilla";
+import PROVOST_ClassRetention from "./pages/PROVOST/PROVOST_ClassRetention";
+import PROVOST_Inbox from "./pages/PROVOST/PROVOST_Inbox";
 
 // Faculty screens
-import FAC_Overview from "./FAC_Overview";
-import FAC_Inbox from "./FAC_Inbox";
+import FAC_Overview from "./pages/FACULTY/FAC_Overview";
+import FAC_Inbox from "./pages/FACULTY/FAC_Inbox";
 
 // Office Manager screens
-import OM_LoadAssignment from "./OM_LoadAssignment";
-import OM_FacultyManagement from "./OM_FacultyManagement";
-import OM_CourseManagement from "./OM_CourseManagement";
-import OM_ReportAnalytics from "./OM_ReportAnalytics";
-import OM_FacultyForm from "./OM_FacultyForm";
-import OM_StudentPetition from "./OM_StudentPetition";
-import OM_ClassRetention from "./OM_ClassRetention";
-import OM_Inbox from "./OM_Inbox";
+import OM_LoadAssignment from "./pages/OM/OM_LoadAssignment";
+import OM_FacultyManagement from "./pages/OM/OM_FacultyManagement";
+import OM_CourseManagement from "./pages/OM/OM_CourseManagement";
+import OM_ReportAnalytics from "./pages/OM/OM_ReportAnalytics";
+import OM_FacultyForm from "./pages/OM/OM_FacultyForm";
+import OM_StudentPetition from "./pages/OM/OM_StudentPetition";
+import OM_ClassRetention from "./pages/OM/OM_ClassRetention";
+import OM_Inbox from "./pages/OM/OM_Inbox";
 
 // Chair screens
-import CHAIR_Plantilla from "./CHAIR_Plantilla";
-import CHAIR_ClassRetention from "./CHAIR_ClassRetention"; 
-import CHAIR_CourseManagement from "./CHAIR_CourseManagement";
-import CHAIR_FacultyManagement from "./CHAIR_FacultyManagement";
-import CHAIR_ReportsAnalytics from "./CHAIR_ReportsAnalytics";
-import CHAIR_StudentPetition from "./CHAIR_StudentPetition";
-import CHAIR_FacultyService from "./CHAIR_FacultyService"; 
-import CHAIR_Inbox from "./CHAIR_Inbox";
-
+import CHAIR_Plantilla from "./pages/CHAIR/CHAIR_Plantilla";
+import CHAIR_ClassRetention from "./pages/CHAIR/CHAIR_ClassRetention";
+import CHAIR_CourseManagement from "./pages/CHAIR/CHAIR_CourseManagement";
+import CHAIR_FacultyManagement from "./pages/CHAIR/CHAIR_FacultyManagement";
+import CHAIR_ReportsAnalytics from "./pages/CHAIR/CHAIR_ReportsAnalytics";
+import CHAIR_StudentPetition from "./pages/CHAIR/CHAIR_StudentPetition";
+import CHAIR_FacultyService from "./pages/CHAIR/CHAIR_FacultyService";
+import CHAIR_Inbox from "./pages/CHAIR/CHAIR_Inbox";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Default redirect — now goes to Faculty Overview */}
+        {/* Default redirect */}
         <Route path="/" element={<Navigate to="/chair/plantilla" replace />} />
 
         {/* Chair routes */}
@@ -65,10 +66,10 @@ export default function App() {
         <Route path="/chair/class-retention" element={<CHAIR_ClassRetention />} />
         <Route path="/chair/course-management" element={<CHAIR_CourseManagement />} />
         <Route path="/chair/faculty-management" element={<CHAIR_FacultyManagement />} />
-        <Route path="/chair/faculty-service" element={<CHAIR_FacultyService />} /> 
+        <Route path="/chair/faculty-service" element={<CHAIR_FacultyService />} />
         <Route path="/chair/reports-analytics" element={<CHAIR_ReportsAnalytics />} />
         <Route path="/chair/student-petition" element={<CHAIR_StudentPetition />} />
-        <Route path="/chair/inbox" element={<CHAIR_Inbox />} /> 
+        <Route path="/chair/inbox" element={<CHAIR_Inbox />} />
 
         {/* Faculty routes */}
         <Route path="/faculty/overview" element={<FAC_Overview />} />
@@ -111,7 +112,7 @@ export default function App() {
         <Route path="/faculty-form" element={<OM_FacultyForm />} />
         <Route path="/student-petition" element={<OM_StudentPetition />} />
         <Route path="/class-retention" element={<OM_ClassRetention />} />
-        <Route path="/om/inbox" element={<OM_Inbox />} /> 
+        <Route path="/om/inbox" element={<OM_Inbox />} />
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
