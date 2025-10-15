@@ -802,9 +802,26 @@ function RoomCard({ room, onEdit, onView }: { room: Room; onEdit: (r: Room) => v
     <div className="rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
       <h3 className="font-bold">{room.code}</h3>
       <p className="text-sm text-gray-600">{room.building} | {room.campus}</p>
-      <p className={cls("mt-1 font-medium", room.status === "Available" ? "text-green-600" : "text-red-600")}>
-        {room.status}
-      </p>
+      {/* shows “No Available Slots” when none are free */}
+      {(() => {
+        const total = room.schedule?.length ?? 0;
+        const avail = (room.schedule || []).filter(s => !s.sectionCode).length;
+        const noneAvailable = total > 0 && avail === 0;
+
+        const text =
+          total === 0
+            ? room.status                      // no configured slots yet → keep legacy label
+            : noneAvailable
+              ? "No Available Slots"
+              : `${avail} Available Slot${avail !== 1 ? "s" : ""}`;
+
+        const color =
+          total === 0
+            ? (room.status === "Available" ? "text-green-600" : "text-red-600")
+            : (noneAvailable ? "text-red-600" : "text-green-600");
+
+        return <p className={cls("mt-1 font-medium", color)}>{text}</p>;
+      })()}
       <div className="mt-2 flex items-center gap-4 text-sm text-gray-700">
         <span className="flex items-center gap-1"><Users className="h-4 w-4 text-emerald-700" />{room.capacity}</span>
         <span className="flex items-center gap-1">{typeIcon}{room.type}</span>
@@ -827,6 +844,12 @@ function computeRoomStatus(room: Room): "Available" | "Full Slots" {
   // A room is Full only when it has at least one slot and all of them have sectionCode assigned
   if (sched.length > 0 && sched.every(s => s.sectionCode)) return "Full Slots";
   return "Available";
+}
+
+function availableSlots(room: Room): number {
+  const sched = room.schedule || [];
+  // count configured slots with no assigned section
+  return sched.filter(s => !s.sectionCode).length;
 }
 
 /* ---------------- Page ---------------- */

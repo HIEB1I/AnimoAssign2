@@ -633,6 +633,7 @@ function EditCoursePanel({
     </div>
   );
 }
+const DAY_OPTIONS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 /* ----------------------- Course Card ----------------------- */
 function CourseCard({
@@ -675,20 +676,26 @@ function CourseCard({
     onCardBusyChange(course.code, localBusy);
   }, [localBusy, course.code, onCardBusyChange]);
 
-  // Editable subset
-  type SectionEditable = { section: string; room1: string; room2: string; capacity: string };
+  type SectionEditable = {
+    section: string;
+    room1: string;
+    room2: string;
+    capacity: string;
+  };
+
   const toEditable = (row: SectionRow): SectionEditable => ({
     section: row[2] || "",
     room1: row[7] || "",
     room2: row[11] || "",
     capacity: row[12] || "",
   });
+
   const fromEditable = (row: SectionRow, e: SectionEditable): SectionRow => {
     const copy = [...row] as SectionRow;
-    copy[2] = e.section;
-    copy[7] = e.room1;
-    copy[11] = e.room2;
-    copy[12] = e.capacity;
+    copy[2] = e.section;   // Section
+    copy[7] = e.room1;     // Room 1
+    copy[11] = e.room2;    // Room 2
+    copy[12] = e.capacity; // Capacity
     return copy;
   };
 
@@ -799,140 +806,156 @@ function CourseCard({
         />
       )}
 
-      {/* Sections */}
-      <div>
-        <div className="space-y-2">
-          {sections.map((row, i) => (
-            <div
-              key={`${row[2]}-${i}`}
-              className="grid items-center gap-1 rounded-lg border bg-gray-50 px-3 py-2 text-sm overflow-hidden
-                          grid-cols-[minmax(70px,0.7fr)_minmax(70px,0.6fr)_minmax(220px,1.8fr)_minmax(180px,1.2fr)_minmax(120px,1fr)_minmax(180px,1.2fr)_minmax(120px,1fr)_minmax(90px,0.6fr)_max-content]"
+{/* Sections */}
+<div>
+  <div className="overflow-x-auto rounded-lg border border-gray-200">
+    <table className="w-full text-sm border-collapse">
+      <thead className="bg-gray-50 text-emerald-800">
+        <tr className="text-[13px] font-semibold">
+          <th className="px-3 py-2 text-left w-[90px]">Section</th>
+          <th className="px-3 py-2 text-left w-[70px]">Units</th>
+          <th className="px-3 py-2 text-left min-w-[220px]">Faculty</th>
 
-            >
-              {editingIndex === i ? (
-                <>
-                  {/* Section */}
-                  <input
-                    value={editRowDraft?.section || ""}
-                    onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), section: e.target.value }))}
-                    className="min-w-0 truncate rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                  />
-                  {/* Units */}
-                  <span>{row[1]}</span>
-                  {/* Faculty */}
-                  <span className={row[3] === "Unassigned" ? "text-red-600 font-medium truncate" : "truncate"}>
-                    {row[3]}
-                  </span>
-                  {/* Day 1 */}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="truncate">{row[4] || "—"} {fmtTime(row[5])}–{fmtTime(row[6])}</span>
-                  </span>
-                  {/* Room 1 */}
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <input
-                      value={editRowDraft?.room1 || ""}
-                      onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room1: e.target.value }))}
-                      className="min-w-0 flex-1 truncate rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                    />
-                  </div>
-                  {/* Day 2 */}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="truncate">{row[8] || "—"} {fmtTime(row[9])}–{fmtTime(row[10])}</span>
-                  </span>
-                  {/* Room 2 */}
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <input
-                      value={editRowDraft?.room2 || ""}
-                      onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room2: e.target.value }))}
-                      className="min-w-0 flex-1 truncate rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                    />
-                  </div>
-                  {/* Capacity */}
-                  <input
-                    value={editRowDraft?.capacity || ""}
-                    onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), capacity: e.target.value }))}
-                    className="min-w-0 truncate rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                  />
-                  {/* Save */}
-                  <div className="flex justify-center">
-                    <button
-                      onClick={saveEditRow}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
-                    >
-                      <Check className="h-4 w-4" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Section */}
-                  <span className="font-medium">{row[2]}</span>
-                  {/* Units */}
-                  <span>{row[1]}</span>
-                  {/* Faculty */}
-                  <span className={row[3] === "Unassigned" ? "text-red-600 font-medium truncate" : "truncate"}>
-                    {row[3]}
-                  </span>
-                  {/* Day 1 */}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="truncate">{row[4] || "—"} {fmtTime(row[5])}–{fmtTime(row[6])}</span>
-                  </span>
-                  {/* Room 1 */}
-                  <span className="flex items-center gap-1">
-                    {row[7] ? <><MapPin className="h-4 w-4" /><span className="truncate">{row[7]}</span></> : "—"}
-                  </span>
-                  {/* Day 2 */}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="truncate">{row[8] || "—"} {fmtTime(row[9])}–{fmtTime(row[10])}</span>
-                  </span>
-                  {/* Room 2 */}
-                  <span className="flex items-center gap-1">
-                    {row[11] ? <><MapPin className="h-4 w-4" /><span className="truncate">{row[11]}</span></> : "—"}
-                  </span>
-                  {/* Capacity */}
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {row[12] || "—"}
-                  </span>
-                  {/* Actions */}
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => !rowActionsDisabled && startEditRow(i)}
-                      disabled={rowActionsDisabled}
-                      className="text-gray-500 hover:text-black disabled:opacity-50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => !rowActionsDisabled && confirmDelete(i)}
-                      disabled={rowActionsDisabled}
-                      className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+          <th className="px-3 py-2 text-left w-[120px]">Day 1</th>
+          <th className="px-3 py-2 text-left w-[100px]">Begin 1</th>
+          <th className="px-3 py-2 text-left w-[100px]">End 1</th>
+          <th className="px-3 py-2 text-left min-w-[120px]">Room 1</th>
 
-          {!adding && editingIndex === null && !editingCourse && (
-            <button
-              onClick={handleAddSection}
-              disabled={globalBusy}
-              className="mt-4 inline-flex items-center gap-2 rounded-md border border-[#21804A] px-3 py-2 text-sm text-[#21804A] hover:bg-[#21804A]/10"
-            >
-              + Add Section
-            </button>
-          )}
-        </div>
-      </div>
+          <th className="px-3 py-2 text-left w-[120px]">Day 2</th>
+          <th className="px-3 py-2 text-left w-[100px]">Begin 2</th>
+          <th className="px-3 py-2 text-left w-[100px]">End 2</th>
+          <th className="px-3 py-2 text-left min-w-[120px]">Room 2</th>
+
+          <th className="px-3 py-2 text-left w-[90px]">Capacity</th>
+          <th className="px-3 py-2 text-center w-[90px]">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody className="align-middle">
+        {sections.map((row, i) =>
+          editingIndex === i ? (
+            <tr key={`${row[2]}-${i}`} className="border-t">
+              {/* Section (editable) */}
+              <td className="px-3 py-2">
+                <input
+                  value={editRowDraft?.section || ""}
+                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), section: e.target.value }))}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
+                />
+              </td>
+
+              {/* Units (read-only) */}
+              <td className="px-3 py-2">{row[1]}</td>
+
+              {/* Faculty (read-only) */}
+              <td className="px-3 py-2">
+                <span className={row[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>{row[3]}</span>
+              </td>
+
+              {/* Day 1 / Begin 1 / End 1 (read-only) */}
+              <td className="px-3 py-2">{row[4] || "—"}</td>
+              <td className="px-3 py-2">{fmtTime(row[5])}</td>
+              <td className="px-3 py-2">{fmtTime(row[6])}</td>
+
+              {/* Room 1 (editable) */}
+              <td className="px-3 py-2">
+                <input
+                  value={editRowDraft?.room1 || ""}
+                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room1: e.target.value }))}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
+                />
+              </td>
+
+              {/* Day 2 / Begin 2 / End 2 (read-only) */}
+              <td className="px-3 py-2">{row[8] || "—"}</td>
+              <td className="px-3 py-2">{fmtTime(row[9])}</td>
+              <td className="px-3 py-2">{fmtTime(row[10])}</td>
+
+              {/* Room 2 (editable) */}
+              <td className="px-3 py-2">
+                <input
+                  value={editRowDraft?.room2 || ""}
+                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room2: e.target.value }))}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
+                />
+              </td>
+
+              {/* Capacity (editable) */}
+              <td className="px-3 py-2">
+                <input
+                  value={editRowDraft?.capacity || ""}
+                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), capacity: e.target.value }))}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
+                />
+              </td>
+
+              {/* Save */}
+              <td className="px-3 py-2">
+                <div className="flex justify-center">
+                  <button
+                    onClick={saveEditRow}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
+                  >
+                    <Check className="h-4 w-4" strokeWidth={2.5} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            <tr key={`${row[2]}-${i}`} className="border-t hover:bg-neutral-50">
+              <td className="px-3 py-2 font-medium">{row[2]}</td>
+              <td className="px-3 py-2">{row[1]}</td>
+              <td className="px-3 py-2">
+                <span className={row[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>{row[3]}</span>
+              </td>
+
+              <td className="px-3 py-2">{row[4] || "—"}</td>
+              <td className="px-3 py-2">{fmtTime(row[5])}</td>
+              <td className="px-3 py-2">{fmtTime(row[6])}</td>
+              <td className="px-3 py-2">{row[7] || "—"}</td>
+
+              <td className="px-3 py-2">{row[8] || "—"}</td>
+              <td className="px-3 py-2">{fmtTime(row[9])}</td>
+              <td className="px-3 py-2">{fmtTime(row[10])}</td>
+              <td className="px-3 py-2">{row[11] || "—"}</td>
+
+              <td className="px-3 py-2">{row[12] || "—"}</td>
+              <td className="px-3 py-2">
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={() => !rowActionsDisabled && startEditRow(i)}
+                    disabled={rowActionsDisabled}
+                    className="text-gray-500 hover:text-black disabled:opacity-50"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => !rowActionsDisabled && confirmDelete(i)}
+                    disabled={rowActionsDisabled}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Add Section button stays below the table */}
+  {!adding && editingIndex === null && !editingCourse && (
+    <button
+      onClick={handleAddSection}
+      disabled={globalBusy}
+      className="mt-4 inline-flex items-center gap-2 rounded-md border border-[#21804A] px-3 py-2 text-sm text-[#21804A] hover:bg-[#21804A]/10 disabled:opacity-50"
+    >
+      + Add Section
+    </button>
+  )}
+</div>
 
       {/* Delete Modal */}
       {showDelete && (
