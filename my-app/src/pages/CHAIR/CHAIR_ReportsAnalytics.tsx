@@ -1,4 +1,4 @@
-import AppShell from "./base/AppShell";
+import AppShell from "../../base/AppShell";
 import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked } from "lucide-react";
 
 const chairItems = [

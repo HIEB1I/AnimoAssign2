@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, SquarePen, ChevronDown } from "lucide-react";
-import AppShell from "./base/AppShell";
+import AppShell from "../../base/AppShell";
 import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked } from "lucide-react";
 
 // tiny util (same as CHAIR_ClassRetention)

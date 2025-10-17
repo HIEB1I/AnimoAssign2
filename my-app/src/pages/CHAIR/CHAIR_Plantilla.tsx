@@ -1,6 +1,6 @@
 // src/CHAIR_Plantilla.tsx
 import React, { useRef, useState } from "react";
-import AppShell from "./base/AppShell";
+import AppShell from "../../base/AppShell";
 import {
   ListChecks,
   Users,

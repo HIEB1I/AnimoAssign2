@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import AppShell from "./base/AppShell";
+import AppShell from "../../base/AppShell";
 import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked, Search, ChevronDown, MoreVertical, FileText as FileTextIcon, BookOpen as BookOpenIcon } from "lucide-react";
 
 /* ---------- tiny util ---------- */

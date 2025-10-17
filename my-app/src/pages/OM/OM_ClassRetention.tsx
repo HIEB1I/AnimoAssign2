@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { cls } from "./utilities/cls";
-import AppShell from "./base/AppShell";
+import { cls } from "../../utilities/cls";
+import AppShell from "../../base/AppShell";
 import {
   CheckCheck,
   Check,
   ChevronDown,
   Search,
-  Edit
 } from "lucide-react";
 
 /* ---------------- SelectBox ---------------- */
@@ -36,6 +35,7 @@ function SelectBox({
       !btnRef.current?.contains(e.target as Node) &&
       !listRef.current?.contains(e.target as Node) &&
       setOpen(false);
+
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
@@ -51,6 +51,7 @@ function SelectBox({
         {value || <span className="text-gray-400">{placeholder}</span>}
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
       </button>
+
       {open && (
         <div
           ref={listRef}
@@ -80,39 +81,6 @@ function SelectBox({
   );
 }
 
-/* ---------------- Styled TextBox ---------------- */
-function TextBox({
-  value,
-  onChange,
-  placeholder = "Enter text...",
-  className = "",
-  disabled = false,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className={`relative ${className}`}>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={cls(
-          "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm",
-          "focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition",
-          "placeholder-gray-400",
-          disabled && "cursor-not-allowed bg-gray-100 text-gray-400 opacity-70"
-        )}
-      />
-    </div>
-  );
-}
-
 /* ---------------- Workflow Chips ---------------- */
 const WorkflowChips = () => {
   const steps = ["APO", "Office Manager", "Department Chair", "Dean", "Provost"];
@@ -138,59 +106,54 @@ const WorkflowChips = () => {
 };
 
 /* ---------------- Main ---------------- */
-export default function OM_StudentPetition() {
+export default function OM_ClassRetention() {
   const [status, setStatus] = useState("All Status");
   const [search, setSearch] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [showApprovePrompt, setShowApprovePrompt] = useState(false);
-  const [editRow, setEditRow] = useState<string | null>(null);
-  const [editableData, setEditableData] = useState<Record<string, any>>({});
 
-  const statusOptions = [
-    "All Status",
-    "Less Than Minimum",
-    "Forwarded To Department",
-    "Rejected",
-    "Wait For Frosh Block",
-    "Wait For College Enlistment",
-    "Open Slots Available",
-    "New Class Opened",
-    "Advised For Special Class",
-    "Slots Increased",
-  ];
-
-  const [data, setData] = useState([
+  const data = [
     {
       course: "CCPROG3",
       title: "Object-Oriented Programming",
-      count: 38,
-      section: "S20",
-      faculty: "BEREDO, JACKYLYN",
-      status: "New Class Opened",
-      day1: "T",
-      begin1: "0730",
-      end1: "0900",
-      day2: "H",
-      begin2: "0730",
-      end2: "0900",
-      capacity: 20,
+      section: "S16",
+      stuUnits: 3,
+      facUnits: 3,
+      enrolled: 12,
+      faculty: "BEREDO, JACKLYN",
+      status: "Approved",
     },
     {
       course: "STCLOUD",
       title: "Cloud Computing",
-      count: 14,
-      section: "S18",
-      faculty: "CU, GREGORY",
-      status: "Advised For Special Class",
-      day1: "S",
-      begin1: "0900",
-      end1: "1030",
-      day2: "S",
-      begin2: "1045",
-      end2: "1200",
-      capacity: 20,
+      section: "S14",
+      stuUnits: 3,
+      facUnits: 3,
+      enrolled: 10,
+      faculty: "FLORES, FRITZ KEVIN",
+      status: "Under Review",
     },
-  ]);
+    {
+      course: "CSMODEL",
+      title: "Discrete Structures",
+      section: "S11",
+      stuUnits: 3,
+      facUnits: 3,
+      enrolled: 6,
+      faculty: "CU, GREGORY",
+      status: "Dissolved",
+    },
+    {
+      course: "ITDBADM",
+      title: "Database Management",
+      section: "S14",
+      stuUnits: 3,
+      facUnits: 3,
+      enrolled: 1,
+      faculty: "GONDA, RAPHAEL",
+      status: "Special Class",
+    },
+  ];
 
   const filtered = data.filter(
     (r) =>
@@ -198,32 +161,14 @@ export default function OM_StudentPetition() {
       r.course.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleEdit = (course: string) => {
-    const row = data.find((r) => r.course === course);
-    if (row) {
-      setEditRow(course);
-      setEditableData({ ...row });
-    }
-  };
-
-  const handleSave = () => {
-    setData((prev) =>
-      prev.map((r) =>
-        r.course === editRow ? ({ ...editableData } as typeof r) : r
-      )
-    );
-    setEditRow(null);
-  };
-
-
   return (
     <AppShell>
       <main className="w-full px-8 py-8">
         {/* Header */}
         <header className="mb-6">
-          <h1 className="text-2xl font-bold">Student Petition</h1>
+          <h1 className="text-2xl font-bold">Class Retention</h1>
           <p className="text-sm text-gray-600">
-            Manage course section requests and approvals for Term 1 AY 2025–2026
+            Manage class retention requests for low-enrollment courses for Term 1 AY 2025–2026
           </p>
           <WorkflowChips />
         </header>
@@ -240,12 +185,22 @@ export default function OM_StudentPetition() {
             />
           </div>
 
-          <SelectBox value={status} onChange={setStatus} options={statusOptions} />
+          <SelectBox
+            value={status}
+            onChange={setStatus}
+            options={[
+              "All Status",
+              "Approved",
+              "Under Review",
+              "Dissolved",
+              "Special Class",
+            ]}
+          />
 
           <button
             onClick={() => {
               if (selectedRows.length === 0) {
-                alert("Please select at least one petition to approve.");
+                alert("Please select at least one course to approve.");
                 return;
               }
               setShowApprovePrompt(true);
@@ -268,7 +223,7 @@ export default function OM_StudentPetition() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
-                <th className="w-10 px-4 py-2 text-center">                  
+                <th className="w-10 px-4 py-2 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -281,28 +236,21 @@ export default function OM_StudentPetition() {
                       )
                     }
                     className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                  /></th>
+                  />
+                </th>
                 <th className="text-left px-4 py-2">Course Code & Title</th>
-                <th className="text-center px-4 py-2">Petition Count</th>
-                <th className="text-center px-4 py-2">Section</th>
+                <th className="px-4 py-2 text-center">Section</th>
+                <th className="px-4 py-2 text-center">Student Units</th>
+                <th className="px-4 py-2 text-center">Faculty Units</th>
+                <th className="px-4 py-2 text-center">Enrolled Students</th>
                 <th className="text-left px-4 py-2">Faculty</th>
-                <th className="text-center px-4 py-2">Day 1</th>
-                <th className="text-center px-4 py-2">Begin 1</th>
-                <th className="text-center px-4 py-2">End 1</th>
-                <th className="text-center px-4 py-2">Day 2</th>
-                <th className="text-center px-4 py-2">Begin 2</th>
-                <th className="text-center px-4 py-2">End 2</th>
-                <th className="text-center px-4 py-2">Capacity</th>
-                <th className="text-center px-4 py-2">Status</th>
-                <th className="w-10 px-4 py-2"></th>
+                <th className="px-4 py-2 text-center">Status</th>
               </tr>
             </thead>
-
             <tbody className="divide-y">
               {filtered.map((r) => (
                 <tr key={r.course} className="hover:bg-gray-50">
-                  {/* Checkbox for selection */}
-                  <td className="text-center">
+                  <td className="px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(r.course)}
@@ -316,104 +264,38 @@ export default function OM_StudentPetition() {
                       className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
                   </td>
-
-                  {/* Course Code + Title */}
                   <td className="px-4 py-3 text-left font-semibold text-emerald-700">
                     {r.course}
                     <div className="text-xs text-gray-500">{r.title}</div>
                   </td>
-
-                  <td className="text-center">{r.count}</td>
                   <td className="text-center">{r.section}</td>
-
-                  {/* Editable Faculty */}
-                  <td className="text-left">
-                    {editRow === r.course ? (
-                      <TextBox
-                        value={editableData.faculty}
-                        onChange={(v) =>
-                          setEditableData({ ...editableData, faculty: v })
-                        }
-                      />
-                    ) : (
-                      r.faculty
-                    )}
-                  </td>
-
-                  {/* Editable Fields */}
-                  {["day1", "begin1", "end1", "day2", "begin2", "end2"].map((field) => (
-                    <td key={field} className="text-center">
-                      {editRow === r.course ? (
-                        <TextBox
-                          value={editableData[field]}
-                          onChange={(v) =>
-                            setEditableData({ ...editableData, [field]: v })
-                          }
-                          className="w-[70px] text-center"
-                        />
-                      ) : (
-                        r[field as keyof typeof r]
-                      )}
-                    </td>
-                  ))}
-
-                  <td className="text-center">{r.capacity}</td>
-
+                  <td className="text-center">{r.stuUnits}</td>
+                  <td className="text-center">{r.facUnits}</td>
+                  <td className="text-center">{r.enrolled}</td>
+                  <td className="text-left">{r.faculty}</td>
                   <td className="text-center">
                     <span
                       className={cls(
                         "inline-block rounded-full px-3 py-1 text-xs font-semibold",
-                        r.status === "Rejected"
-                          ? "bg-red-100 text-red-700"
-                          : r.status === "New Class Opened"
+                        r.status === "Approved"
                           ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
+                          : r.status === "Under Review"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : r.status === "Special Class"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-red-100 text-red-700"
                       )}
                     >
                       {r.status}
                     </span>
                   </td>
-
-                  {/* Edit / Save Buttons */}
-                  <td className="text-center">
-                    {editRow === r.course ? (
-                      <div className="flex justify-center gap-2">
-                        {/* Save Button (Green Circular) */}
-                        <div className="flex justify-center">
-                          <button
-                            onClick={() => {
-                              setData((prev) =>
-                                prev.map((row) =>
-                                  row.course === editRow
-                                    ? ({ ...editableData } as typeof row)
-                                    : row
-                                )
-                              );
-                              setEditRow(null);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
-                          >
-                            <Check className="h-4 w-4" strokeWidth={2.5} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleEdit(r.course)}
-                        className="text-emerald-700 hover:brightness-110"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
 
-        {/* Approval Modal */}
+        {/* Approval Confirmation Modal */}
         {showApprovePrompt && (
           <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
@@ -421,13 +303,15 @@ export default function OM_StudentPetition() {
                 <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
               <h3 className="mb-2 text-center text-2xl font-semibold">
-                Approve Selected Petitions?
+                Approve Selected Courses?
               </h3>
               <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
                 You are about to approve{" "}
                 <span className="font-semibold">{selectedRows.length}</span>{" "}
-                {selectedRows.length === 1 ? "petition" : "petitions"}.
-                <br />
+                {selectedRows.length === 1
+                  ? "class retention request"
+                  : "class retention requests"}
+                .<br />
                 Once confirmed, these will be forwarded to the{" "}
                 <span className="font-semibold">Department Chair</span>.
               </p>
@@ -441,9 +325,7 @@ export default function OM_StudentPetition() {
                 <button
                   onClick={() => {
                     setShowApprovePrompt(false);
-                    alert(
-                      `✅ ${selectedRows.length} petition(s) approved successfully!`
-                    );
+                    alert(`✅ ${selectedRows.length} course(s) approved successfully!`);
                     setSelectedRows([]);
                   }}
                   className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"

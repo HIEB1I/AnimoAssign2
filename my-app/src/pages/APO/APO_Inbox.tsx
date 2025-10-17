@@ -9,7 +9,6 @@ import {
   Plus,
   ChevronLeft,
 } from "lucide-react";
-import Login_BG from "./assets/Images/login_bg.png";
 
 /* ============ tiny utils ============ */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");

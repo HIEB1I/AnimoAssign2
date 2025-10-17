@@ -1,244 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
 import {
-  UserCircle, Bell, LogOut, Inbox, BookOpen, Users, 
-  Building2, Eye, Pencil, ChevronDown, FlaskConical, MapPin, ArrowLeft
+  Users, 
+  Building2, 
+  Eye, 
+  Pencil, 
+  ChevronDown, 
+  FlaskConical, 
+  ArrowLeft
 } from "lucide-react";
+import TopBar from "../../component/TopBar";
+import Tabs from "../../component/Tabs";
+import SelectBox from "../../component/SelectBox";
 
 /* ---------------- Utilities ---------------- */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
 const chipClass =
   "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700";
-
-/* ----------------------- Top Bar ----------------------- */
-function TopBar({
-  fullName,
-  role,
-}: {
-  fullName: string;
-  role: string;
-}) {
-  const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  // --- Notifications ---
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Department Chair approved your Plantilla", details: "The Dean has been notified.", time: new Date(Date.now() - 5 * 60 * 1000), seen: false },
-    { id: 2, title: "Provost feedback received", details: "Review comments have been added.", time: new Date(Date.now() - 20 * 60 * 1000), seen: false },
-    { id: 3, title: "New course schedule uploaded", details: "Check the updated 1st Term schedule.", time: new Date(Date.now() - 60 * 60 * 1000), seen: false },
-  ]);
-  const notifRef = useRef<HTMLDivElement | null>(null);
-
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-    if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
-      setMenuOpen(false);
-    if (notifRef.current && !notifRef.current.contains(e.target as Node))
-      setNotifOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  useEffect(() => {
-    if (!headerRef.current) return;
-    const el = headerRef.current;
-    const setVar = () =>
-      document.documentElement.style.setProperty(
-        "--header-h",
-        `${el.offsetHeight}px`
-      );
-    setVar();
-    const ro = new ResizeObserver(setVar);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    sessionStorage.clear();
-    navigate("/login");
-  };
-  const timeAgo = (d: Date) => {
-    const s = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (s < 60) return `${s}s ago`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m} minutes ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h} hours ago`;
-    const dd = Math.floor(h / 24);
-    return `${dd} day${dd > 1 ? "s" : ""} ago`;
-  };
-
-  const hasUnseen = notifications.some((n) => !n.seen);
-  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
-  const toggleNotif = () => {
-    setNotifOpen((v) => !v);
-    if (!notifOpen) setNotifications((n) => n.map((x) => ({ ...x, seen: true })));
-  };
-
-  return (
-    <header className="sticky top-0 z-[80]" ref={headerRef}>
-      <div className="w-full border-b border-emerald-900/30 bg-gradient-to-r from-emerald-800 via-emerald-700 to-green-600">
-        <div className="mx-auto flex w-full items-center justify-between px-5 py-4 text-white">
-          <div ref={wrapperRef} className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-white/10"
-            >
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20">
-                <UserCircle className="h-6 w-6" />
-              </span>
-              <span className="leading-tight text-left">
-                <div className="text-[17px] font-semibold">{fullName}</div>
-                <div className="text-[12px] opacity-90">{role}</div>
-              </span>
-            </button>
-
-            {menuOpen && (
-              <div className="absolute left-0 top-full z-[90] mt-2 w-56 rounded-2xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
-                <div className="px-4 pb-2 pt-3 text-[15px] font-semibold text-emerald-700">
-                  My Account
-                </div>
-                <div className="mx-4 h-px bg-neutral-200" />
-                <button
-                  onClick={logout}
-                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-[15px] hover:bg-neutral-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/apo/inbox")}
-              className="rounded-md p-2 hover:bg-white/15"
-              title="Inbox"
-            >
-              <Inbox className="h-5 w-5" />
-            </button>
-            {/* Notifications */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={toggleNotif}
-                className="relative rounded-md p-2 hover:bg-white/15"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                {hasUnseen && (
-                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
-                )}
-              </button>
-
-              {notifOpen && (
-                <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
-                  <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {sortedNotifs.length ? (
-                      sortedNotifs.map((n) => (
-                        <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
-                          <div className="font-semibold text-slate-900">{n.title}</div>
-                          <div className="text-sm text-gray-600">{n.details}</div>
-                          <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="h-[2px] w-full bg-neutral-200/80" />
-      </div>
-    </header>
-  );
-}
-
-/* ---------------- Sticky Tabs ---------------- */
-function ApoTabs() {
-  const items = [
-    { to: "/apo/preenlistment", label: "Pre-Enlistment", icon: Users },
-    { to: "/apo/courseofferings", label: "Course Offerings", icon: BookOpen },
-    { to: "/apo/roomallocation", label: "Room Allocation", icon: Building2 }
-  ];
-  return (
-    <div className="sticky top-[var(--header-h,58px)] z-50 w-full bg-gray-100/80 backdrop-blur">
-      <div className="mx-auto w-full px-4 py-3">
-        <div className="rounded-xl bg-gray-200 px-3 py-2 shadow-sm">
-          <div className="grid grid-cols-3 gap-2">
-            {items.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to}
-                className={({ isActive }) =>
-                  cls(
-                    "mx-auto inline-flex w-full max-w-[220px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition",
-                    isActive ? "bg-white text-emerald-700 shadow" : "text-gray-800 hover:bg-white/60"
-                  )
-                }>
-                <Icon className="h-4 w-4" /> {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------- SelectBox ---------------- */
-function SelectBox({
-  value, onChange, options, placeholder = "— Select —", className = "", disabled = false
-}: {
-  value: string; onChange: (v: string) => void; options: string[];
-  placeholder?: string; className?: string; disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState<number>(() => Math.max(0, options.findIndex(o => o === value)));
-  const btnRef = useRef<HTMLButtonElement>(null); const listRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => open && !btnRef.current?.contains(e.target as Node)
-      && !listRef.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-  return (
-    <div className={cls("relative min-w-[180px]", className)}>
-      <button ref={btnRef} type="button"
-        onClick={() => !disabled && setOpen(v => !v)} disabled={disabled}
-        className={cls(
-          "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-left text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/30",
-          disabled && "cursor-not-allowed opacity-60"
-        )}>
-        {value || <span className="text-gray-400">{placeholder}</span>}
-        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
-      </button>
-      {open && (
-        <div ref={listRef}
-          className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-gray-300 bg-white shadow-xl">
-          {options.map((opt, i) => (
-            <button key={opt} onMouseEnter={() => setHover(i)}
-              onClick={() => { onChange(opt); setOpen(false); btnRef.current?.focus(); }}
-              className={cls(
-                "block w-full px-4 py-2 text-left text-sm",
-                i === hover && "bg-emerald-50",
-                value === opt && "bg-emerald-100 text-emerald-800 font-medium"
-              )}>
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ---------------- MultiSelect ---------------- */
 function MultiSelect({
@@ -545,13 +322,6 @@ useEffect(() => {
               />
             </div>
           </div>
-            {schedules.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {schedules.map((s, i) => (
-                  <span key={i} className={chipClass}>{s.day} – {s.slot}</span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         <div className="mt-6 flex justify-between">
@@ -885,7 +655,7 @@ export default function RoomAllocationScreen() {
   return (
     <div className="min-h-screen w-full bg-gray-50 text-slate-900">
       <TopBar fullName="Hazel Ventura" role="Academic Programming Officer" />
-      <ApoTabs />
+      <Tabs />
       <main className="p-6 w-full">
         {!viewingRoom ? (
           <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
