@@ -1,7 +1,7 @@
 // src/OM_LoadAssignment.tsx
 import React, { useEffect, useRef, useState } from "react";
-import AppShell from "./base/AppShell";
-import { cls } from "./utilities/cls";
+import AppShell from "../../base/AppShell";
+import { cls } from "../../utilities/cls";
 import {
   ChevronDown,
   Search as SearchIcon,

@@ -1,14 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
-import { cls } from "./utilities/cls";
-import AppShell from "./base/AppShell";
+import React, { useState, useRef, useEffect } from "react";
+import AppShell from "../../base/AppShell";
+import { NavLink } from "react-router-dom";
 import {
+  ListChecks,
+  Users,
+  BookOpen,
+  BarChart3,
+  FileText,
+  FilePlus,
+  BookMarked,
+  Search,
   CheckCheck,
   Check,
   ChevronDown,
-  Search,
 } from "lucide-react";
 
-/* ---------------- SelectBox ---------------- */
+/* ---------- tiny utils (match your existing style) ---------- */
+const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
+
+/* ---------- Chair Workflow: highlight Department Chair (green) ---------- */
+const WorkflowChips = () => {
+  const steps = ["APO", "Office Manager", "Department Chair", "Dean", "Provost"];
+  return (
+    <div className="flex flex-wrap items-center gap-2 mt-3">
+      {steps.map((step, i) => (
+        <React.Fragment key={step}>
+          <span
+            className={cls(
+              "rounded-full px-3 py-1 text-[13px] font-medium border",
+              step === "Department Chair"
+                ? "border-emerald-700 bg-emerald-700 text-white"
+                : "border-gray-300 bg-white text-gray-800"
+            )}
+          >
+            {step}
+          </span>
+          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+/* ---------- Re-usable SelectBox (ported from Dean, same UX) ---------- */
 function SelectBox({
   value,
   onChange,
@@ -23,9 +57,7 @@ function SelectBox({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState<number>(() =>
-    Math.max(0, options.findIndex((o) => o === value))
-  );
+  const [hover, setHover] = useState<number>(() => Math.max(0, options.findIndex((o) => o === value)));
   const btnRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +67,6 @@ function SelectBox({
       !btnRef.current?.contains(e.target as Node) &&
       !listRef.current?.contains(e.target as Node) &&
       setOpen(false);
-
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
@@ -51,7 +82,6 @@ function SelectBox({
         {value || <span className="text-gray-400">{placeholder}</span>}
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
       </button>
-
       {open && (
         <div
           ref={listRef}
@@ -81,90 +111,47 @@ function SelectBox({
   );
 }
 
-/* ---------------- Workflow Chips ---------------- */
-const WorkflowChips = () => {
-  const steps = ["APO", "Office Manager", "Department Chair", "Dean", "Provost"];
-  return (
-    <div className="flex flex-wrap items-center gap-2 mt-3">
-      {steps.map((step, i) => (
-        <React.Fragment key={step}>
-          <span
-            className={cls(
-              "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "Office Manager"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
-            )}
-          >
-            {step}
-          </span>
-          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-};
-
-/* ---------------- Main ---------------- */
-export default function OM_ClassRetention() {
-  const [status, setStatus] = useState("All Status");
+/* ---------- Page ---------- */
+export default function CHAIR_ClassRetention() {
+  // (Data/behaviors ported from DEAN_ClassRetention)
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All Status");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [showApprovePrompt, setShowApprovePrompt] = useState(false);
 
   const data = [
-    {
-      course: "CCPROG3",
-      title: "Object-Oriented Programming",
-      section: "S16",
-      stuUnits: 3,
-      facUnits: 3,
-      enrolled: 12,
-      faculty: "BEREDO, JACKLYN",
-      status: "Approved",
-    },
-    {
-      course: "STCLOUD",
-      title: "Cloud Computing",
-      section: "S14",
-      stuUnits: 3,
-      facUnits: 3,
-      enrolled: 10,
-      faculty: "FLORES, FRITZ KEVIN",
-      status: "Under Review",
-    },
-    {
-      course: "CSMODEL",
-      title: "Discrete Structures",
-      section: "S11",
-      stuUnits: 3,
-      facUnits: 3,
-      enrolled: 6,
-      faculty: "CU, GREGORY",
-      status: "Dissolved",
-    },
-    {
-      course: "ITDBADM",
-      title: "Database Management",
-      section: "S14",
-      stuUnits: 3,
-      facUnits: 3,
-      enrolled: 1,
-      faculty: "GONDA, RAPHAEL",
-      status: "Special Class",
-    },
+    { course: "CCPROG3", title: "Object-Oriented Programming", section: "S16", stuUnits: 3, facUnits: 3, enrolled: 12, faculty: "BEREDO, JACKLYN L.", status: "Approved" },
+    { course: "STCLOUD", title: "Cloud Computing",             section: "S14", stuUnits: 3, facUnits: 3, enrolled: 10, faculty: "FLORES, FRITZ KEVIN", status: "Under Review" },
+    { course: "CSMODEL", title: "Discrete Structures",         section: "S11", stuUnits: 3, facUnits: 3, enrolled: 6,  faculty: "CU, GREGORY",         status: "Rejected" },
   ];
 
   const filtered = data.filter(
     (r) =>
       (status === "All Status" || r.status === status) &&
-      r.course.toLowerCase().includes(search.toLowerCase())
+      (r.course.toLowerCase().includes(search.toLowerCase()) ||
+        r.title.toLowerCase().includes(search.toLowerCase()) ||
+        r.faculty.toLowerCase().includes(search.toLowerCase()))
   );
 
+  // Chair sidebar (same items as in CHAIR_Plantilla)
+  const chairItems = [
+    { to: "/chair/plantilla",         label: "Plantilla",             Icon: ListChecks },
+    { to: "/chair/faculty-management",label: "Faculty Management",    Icon: Users },
+    { to: "/chair/course-management", label: "Course Management",     Icon: BookOpen },
+    { to: "/chair/reports-analytics", label: "Reports and Analytics", Icon: BarChart3 },
+    { to: "/chair/faculty-service",   label: "Faculty Service",       Icon: FileText },
+    { to: "/chair/student-petition",  label: "Student Petition",      Icon: FilePlus },
+    { to: "/chair/class-retention",   label: "Class Retention",       Icon: BookMarked },
+  ];
+
   return (
-    <AppShell>
+    <AppShell
+      topbarProfileName="Neil Patrick DelGallego"
+      topbarProfileSubtitle="Department Chair | Department of Software Technology"
+      sidebarItems={chairItems}
+    >
       <main className="w-full px-8 py-8">
-        {/* Header */}
+        {/* Header (same format, but Chair workflow highlight) */}
         <header className="mb-6">
           <h1 className="text-2xl font-bold">Class Retention</h1>
           <p className="text-sm text-gray-600">
@@ -173,14 +160,14 @@ export default function OM_ClassRetention() {
           <WorkflowChips />
         </header>
 
-        {/* Filter Row */}
+        {/* Filter Row (ported from Dean) */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm mb-6">
           <div className="relative flex-1 min-w-[220px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by course..."
+              placeholder="Search by course, faculty, or title..."
               className="w-full rounded-lg border border-gray-300 px-9 py-2 text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/30"
             />
           </div>
@@ -188,13 +175,7 @@ export default function OM_ClassRetention() {
           <SelectBox
             value={status}
             onChange={setStatus}
-            options={[
-              "All Status",
-              "Approved",
-              "Under Review",
-              "Dissolved",
-              "Special Class",
-            ]}
+            options={["All Status", "Approved", "Under Review", "Rejected"]}
           />
 
           <button
@@ -218,22 +199,17 @@ export default function OM_ClassRetention() {
           </button>
         </div>
 
-        {/* Table */}
-        <div className="border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
+        {/* Table (styled to match CHAIR_FacultyManagement) */}
+        <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
               <tr>
                 <th className="w-10 px-4 py-2 text-center">
                   <input
                     type="checkbox"
-                    checked={
-                      filtered.length > 0 &&
-                      selectedRows.length === filtered.length
-                    }
+                    checked={filtered.length > 0 && selectedRows.length === filtered.length}
                     onChange={(e) =>
-                      setSelectedRows(
-                        e.target.checked ? filtered.map((r) => r.course) : []
-                      )
+                      setSelectedRows(e.target.checked ? filtered.map((r) => r.course) : [])
                     }
                     className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                   />
@@ -268,12 +244,12 @@ export default function OM_ClassRetention() {
                     {r.course}
                     <div className="text-xs text-gray-500">{r.title}</div>
                   </td>
-                  <td className="text-center">{r.section}</td>
-                  <td className="text-center">{r.stuUnits}</td>
-                  <td className="text-center">{r.facUnits}</td>
-                  <td className="text-center">{r.enrolled}</td>
-                  <td className="text-left">{r.faculty}</td>
-                  <td className="text-center">
+                  <td className="px-4 py-3 text-center">{r.section}</td>
+                  <td className="px-4 py-3 text-center">{r.stuUnits}</td>
+                  <td className="px-4 py-3 text-center">{r.facUnits}</td>
+                  <td className="px-4 py-3 text-center">{r.enrolled}</td>
+                  <td className="px-4 py-3 text-left">{r.faculty}</td>
+                  <td className="px-4 py-3 text-center">
                     <span
                       className={cls(
                         "inline-block rounded-full px-3 py-1 text-xs font-semibold",
@@ -281,8 +257,6 @@ export default function OM_ClassRetention() {
                           ? "bg-green-100 text-green-700"
                           : r.status === "Under Review"
                           ? "bg-yellow-100 text-yellow-700"
-                          : r.status === "Special Class"
-                          ? "bg-blue-100 text-blue-700"
                           : "bg-red-100 text-red-700"
                       )}
                     >
@@ -302,18 +276,14 @@ export default function OM_ClassRetention() {
               <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
                 <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
-              <h3 className="mb-2 text-center text-2xl font-semibold">
-                Approve Selected Courses?
-              </h3>
+              <h3 className="mb-2 text-center text-2xl font-semibold">Approve Selected Courses?</h3>
               <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
                 You are about to approve{" "}
                 <span className="font-semibold">{selectedRows.length}</span>{" "}
-                {selectedRows.length === 1
-                  ? "class retention request"
-                  : "class retention requests"}
-                .<br />
+                {selectedRows.length === 1 ? "class retention request" : "class retention requests"}.
+                <br />
                 Once confirmed, these will be forwarded to the{" "}
-                <span className="font-semibold">Department Chair</span>.
+                <span className="font-semibold">Dean</span> for review.
               </p>
               <div className="flex justify-end gap-2">
                 <button
@@ -325,7 +295,7 @@ export default function OM_ClassRetention() {
                 <button
                   onClick={() => {
                     setShowApprovePrompt(false);
-                    alert(`✅ ${selectedRows.length} course(s) approved successfully!`);
+                    alert(`✅ ${selectedRows.length} course(s) approved and forwarded to Provost!`);
                     setSelectedRows([]);
                   }}
                   className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
