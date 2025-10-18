@@ -1,23 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  UserCircle,
-  Bell,
-  LogOut,
-  Inbox,
   Edit,
   Trash2,
-  Users,
-  Clock,
-  MapPin,
   Check,
-  CheckCheck,
-  BookOpen,
   Search,
-  Building2,
   ChevronDown,
-  Upload
+  Upload,
+  MessageSquareText,
+  X,
+  Send
 } from "lucide-react";
+import TopBar from "../../component/TopBar";
+import Tabs from "../../component/Tabs";
+import SelectBox from "../../component/SelectBox";
 
 /* ----------------------- Utilities ----------------------- */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
@@ -27,37 +22,22 @@ const fmtTime = (s: string) => {
   return `${t.slice(0, 2)}:${t.slice(2)}`;
 };
 
-/* ----------------------- Section Shape ----------------------- */
-// Note: Internally we still keep the 13-element tuple for compatibility with existing data,
-// but UI editing now only allows Section, Room(s), Capacity.
-// 0 Course Title (not shown/edited)
-// 1 Units (read-only in UI)
-// 2 Section (editable)
-// 3 Faculty (read-only)
-// 4 Day 1 (read-only)
-// 5 Begin 1 (read-only)
-// 6 End 1 (read-only)
-// 7 Room 1 (editable)
-// 8 Day 2 (read-only)
-// 9 Begin 2 (read-only)
-// 10 End 2 (read-only)
-// 11 Room 2 (editable)
-// 12 Capacity (editable)
+// normalize text for keys/search: trim, collapse whitespace, handle NBSP, case-insensitive
+const norm = (s: string, { upper = true } = {}) =>
+  (s || "")
+    .replace(/\u00A0/g, " ") // NBSP -> space
+    .replace(/\s+/g, " ") // collapse spaces
+    .trim()
+    [upper ? "toUpperCase" : "toLowerCase"]();
 
+/* ----------------------- Types ----------------------- */
+// Section tuple (13 fields kept for compatibility):
+// [0] Title, [1] Units, [2] Section, [3] Faculty,
+// [4] Day1, [5] Begin1, [6] End1, [7] Room1,
+// [8] Day2, [9] Begin2, [10] End2, [11] Room2, [12] Capacity
 type SectionRow = [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string
+  string, string, string, string, string, string, string,
+  string, string, string, string, string, string
 ];
 
 type Course = {
@@ -69,302 +49,40 @@ type Course = {
     | "Department of Computer Technology"
     | "Department of Information Technology";
   ids: string[];
-  programs: string[]; 
+  programs: string[];
+  programCodes?: string[];
   sections: SectionRow[];
 };
 
-/* tag color helper (HEX with Tailwind arbitrary values) */
+/* ----------------------- Tag colors ----------------------- */
 const tagColor = (t: string) => {
   const map: Record<string, string> = {
-    // light sage bg → dark ink text
-    Undergraduate:       "bg-[#C2CEA7] text-[#2E3D31]",
-    Graduate:            "bg-[#C2CEA7] text-[#2E3D31]",
-    "Senior High School":"bg-[#C2CEA7] text-[#2E3D31]",
-
-    // medium sage bg → white text
-    "Department of Software Technology": "bg-[#88A376] text-[#FFFFFF]",
-    "Department of Information Technology": "bg-[#88A376] text-[#FFFFFF]",
-    "Department of Computer Technology": "bg-[#88A376] text-[#FFFFFF]",
-
-    // same bg as above per your snippet → white text for contrast
-    "ID 120": "bg-[#a6b697] text-[#FFFFFF]",
-    "ID 121": "bg-[#a6b697] text-[#FFFFFF]",
-    "ID 122": "bg-[#a6b697] text-[#FFFFFF]",
-    "ID 123": "bg-[#a6b697] text-[#FFFFFF]",
-    "ID 124": "bg-[#a6b697] text-[#FFFFFF]",
-    "ID 125": "bg-[#a6b697] text-[#FFFFFF]",
-
-    // slightly different sage bg → white text
-    "BSCS-ST": "bg-[#88A78E] text-[#FFFFFF]",
-    "BSCS-NIS": "bg-[#88A78E] text-[#FFFFFF]",
-    "BSCS-CSE": "bg-[#88A78E] text-[#FFFFFF]",
-    "BSMS-CS": "bg-[#88A78E] text-[#FFFFFF]",
-    "BS IET-GD": "bg-[#88A78E] text-[#FFFFFF]",
-    "BS IET-AD": "bg-[#88A78E] text-[#FFFFFF]",
-    "BSIT": "bg-[#88A78E] text-[#FFFFFF]",
-    "BSIS": "bg-[#88A78E] text-[#FFFFFF]",
-
-    // your original non-sage red is already readable
+    Undergraduate: "bg-[#C2CEA7] text-[#2E3D31]",
+    Graduate: "bg-[#C2CEA7] text-[#2E3D31]",
+    "Senior High School": "bg-[#C2CEA7] text-[#2E3D31]",
+    "Department of Software Technology": "bg-[#88A376] text-white",
+    "Department of Information Technology": "bg-[#88A376] text-white",
+    "Department of Computer Technology": "bg-[#88A376] text-white",
+    "ID 120": "bg-[#a6b697] text-white",
+    "ID 121": "bg-[#a6b697] text-white",
+    "ID 122": "bg-[#a6b697] text-white",
+    "ID 123": "bg-[#a6b697] text-white",
+    "ID 124": "bg-[#a6b697] text-white",
+    "ID 125": "bg-[#a6b697] text-white",
+    "BSCS-ST": "bg-[#88A78E] text-white",
+    "BSCS-NIS": "bg-[#88A78E] text-white",
+    "BSCS-CSE": "bg-[#88A78E] text-white",
+    "BSMS-CS": "bg-[#88A78E] text-white",
+    "BS IET-GD": "bg-[#88A78E] text-white",
+    "BS IET-AD": "bg-[#88A78E] text-white",
+    BSIT: "bg-[#88A78E] text-white",
+    BSIS: "bg-[#88A78E] text-white",
     Unassigned: "bg-[#FEE2E2] text-[#B91C1C]",
   };
-  // sensible default: light sage bg + dark ink text
   return map[t] || "bg-[#CFDBB8] text-[#2E3D31]";
 };
 
-/* ----------------------- Top Bar ----------------------- */
-function ApoTopBar({ fullName, role }: { fullName: string; role: string }) {
-  const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  // --- Notifications ---
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Department Chair approved your Plantilla", details: "The Dean has been notified.", time: new Date(Date.now() - 5 * 60 * 1000), seen: false },
-    { id: 2, title: "Provost feedback received", details: "Review comments have been added.", time: new Date(Date.now() - 20 * 60 * 1000), seen: false },
-    { id: 3, title: "New course schedule uploaded", details: "Check the updated 1st Term schedule.", time: new Date(Date.now() - 60 * 60 * 1000), seen: false },
-  ]);
-  const notifRef = useRef<HTMLDivElement | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
-        setMenuOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target as Node))
-        setNotifOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  useEffect(() => {
-    if (!headerRef.current) return;
-    const el = headerRef.current;
-    const setVar = () =>
-      document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
-    setVar();
-    const ro = new ResizeObserver(setVar);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    sessionStorage.clear();
-    navigate("/login");
-  };
-  const timeAgo = (d: Date) => {
-    const s = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (s < 60) return `${s}s ago`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m} minutes ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h} hours ago`;
-    const dd = Math.floor(h / 24);
-    return `${dd} day${dd > 1 ? "s" : ""} ago`;
-  };
-
-  const hasUnseen = notifications.some((n) => !n.seen);
-  const sortedNotifs = [...notifications].sort((a, b) => b.time.getTime() - a.time.getTime());
-  const toggleNotif = () => {
-    setNotifOpen((v) => !v);
-    if (!notifOpen) setNotifications((n) => n.map((x) => ({ ...x, seen: true })));
-  };
-
-  return (
-    <header className="sticky top-0 z-[80]" ref={headerRef}>
-      <div className="w-full border-b border-emerald-900/30 bg-gradient-to-r from-emerald-800 via-emerald-700 to-green-600">
-        <div className="mx-auto flex w-full items-center justify-between px-5 py-4 text-white">
-          <div ref={wrapperRef} className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              className="group flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-white/10"
-            >
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20">
-                <UserCircle className="h-6 w-6" />
-              </span>
-              <span className="leading-tight text-left">
-                <div className="text-[17px] font-semibold">{fullName}</div>
-                <div className="text-[12px] opacity-90">{role}</div>
-              </span>
-            </button>
-            {menuOpen && (
-              <div className="absolute left-0 top-full z-[90] mt-2 w-56 rounded-2xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
-                <div className="px-4 pb-2 pt-3 text-[15px] font-semibold text-emerald-700">My Account</div>
-                <div className="mx-4 h-px bg-neutral-200" />
-                <button
-                  onClick={logout}
-                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-[15px] hover:bg-neutral-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/apo/inbox")}
-              className="rounded-md p-2 hover:bg-white/15"
-              title="Inbox"
-            >
-              <Inbox className="h-5 w-5" />
-            </button>
-              {/* Notifications */}
-              <div className="relative" ref={notifRef}>
-                <button
-                  onClick={toggleNotif}
-                  className="relative rounded-md p-2 hover:bg-white/15"
-                  title="Notifications"
-                >
-                  <Bell className="h-5 w-5" />
-                  {hasUnseen && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-emerald-800" />
-                  )}
-                </button>
-
-                {notifOpen && (
-                  <div className="absolute right-0 top-12 z-50 w-96 rounded-xl border border-neutral-200 bg-white text-slate-800 shadow-2xl">
-                    <div className="border-b border-neutral-200 px-4 py-3 font-semibold text-emerald-700">Notifications</div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {sortedNotifs.length ? (
-                        sortedNotifs.map((n) => (
-                          <div key={n.id} className="border-b border-neutral-100 px-4 py-3 last:border-0">
-                            <div className="font-semibold text-slate-900">{n.title}</div>
-                            <div className="text-sm text-gray-600">{n.details}</div>
-                            <div className="mt-1 text-xs text-gray-400">{timeAgo(n.time)}</div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-          </div>
-        </div>
-        <div className="h-[2px] w-full bg-neutral-200/80" />
-      </div>
-    </header>
-  );
-}
-
-/* ----------------------- Sticky Tabs ----------------------- */
-function ApoTabs() {
-  const items = [
-    { to: "/apo/preenlistment", label: "Pre-Enlistment", icon: Users },
-    { to: "/apo/courseofferings", label: "Course Offerings", icon: BookOpen },
-    { to: "/apo/roomallocation", label: "Room Allocation", icon: Building2 },
-  ];
-  return (
-    <div className="sticky top-[var(--header-h,58px)] z-50 w-full bg-gray-100/80 backdrop-blur">
-      <div className="mx-auto w-full max-w-screen-2xl px-4 py-3">
-        <div className="rounded-xl bg-gray-200 px-3 py-2 shadow-sm">
-          <div className="grid grid-cols-3 gap-2">
-            {items.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  cls(
-                    "mx-auto inline-flex w-full max-w-[220px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition",
-                    isActive ? "bg-white text-emerald-700 shadow" : "text-gray-800 hover:bg-white/60"
-                  )
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ----------------------- Single-select dropdown ----------------------- */
-function SelectBox({
-  value,
-  onChange,
-  options,
-  placeholder = "— Select —",
-  className = "",
-  disabled = false,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState<number>(() => Math.max(0, options.findIndex((o) => o === value)));
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => setHover(Math.max(0, options.findIndex((o) => o === value))), [value, options]);
-  useEffect(() => {
-    const close = (e: MouseEvent) =>
-      open && !btnRef.current?.contains(e.target as Node) && !listRef.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  const cx = (...s: Array<string | false | undefined>) => s.filter(Boolean).join(" ");
-  const handleToggle = () => {
-    if (!disabled) setOpen((v) => !v);
-  };
-
-  return (
-    <div className={cls("relative min-w-[180px]", className)}>
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={handleToggle}
-        disabled={disabled}
-        aria-disabled={disabled}
-        className={cx(
-          "w-full rounded-lg border px-3 py-2 text-left text-sm outline-none pr-8",
-          "border-gray-300 bg-white shadow-sm focus:ring-2 focus:ring-emerald-500/30",
-          disabled && "cursor-not-allowed bg-gray-100 text-gray-400"
-        )}
-      >
-        {value || <span className="text-gray-400">{placeholder}</span>}
-        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
-      </button>
-      {open && !disabled && (
-        <div
-          ref={listRef}
-          className="absolute z-20 mt-2 maxh-72 max-h-72 w-full overflow-auto rounded-xl border border-gray-300 bg-white shadow-xl"
-        >
-          {options.map((opt, i) => (
-            <button
-              key={opt}
-              onMouseEnter={() => setHover(i)}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-                btnRef.current?.focus();
-              }}
-              className={cx(
-                "block w-full px-4 py-2 text-left text-sm",
-                i === hover && "bg-emerald-50",
-                value === opt && "bg-emerald-100 text-emerald-800 font-medium"
-              )}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ----------------------- Multi-select dropdown w/ chips ----------------------- */
+/* ----------------------- MultiSelect ----------------------- */
 function MultiSelect({
   label,
   options,
@@ -384,7 +102,10 @@ function MultiSelect({
 
   useEffect(() => {
     const close = (e: MouseEvent) =>
-      open && !btnRef.current?.contains(e.target as Node) && !listRef.current?.contains(e.target as Node) && setOpen(false);
+      open &&
+      !btnRef.current?.contains(e.target as Node) &&
+      !listRef.current?.contains(e.target as Node) &&
+      setOpen(false);
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
@@ -448,7 +169,516 @@ function MultiSelect({
   );
 }
 
-/* ----------------------- Add Course Panel ----------------------- */
+/* ----------------------- ID Card ----------------------- */
+function IDCard({
+  id,
+  courses,
+  globalBusy,
+  onAddCourse,
+  onReplaceCourse,
+  onRemoveCourse,
+  courseCatalog,
+}: {
+  id: string;
+  courses: Course[];
+  globalBusy: boolean;
+  onAddCourse: (course: Course) => void;
+  onReplaceCourse: (prev: Course, updated: Course) => void;
+  onRemoveCourse: (target: Course) => void;
+  courseCatalog: Record<string, string>;
+}) {
+  const programGroups = useMemo(() => {
+    const map: Record<string, { courses: Course[]; codes: string[] }> = {};
+    for (const course of courses) {
+      const family = course.programs[0];
+      const codeList = course.programCodes || [];
+      if (!map[family]) map[family] = { courses: [], codes: [] };
+      map[family].courses.push(course);
+      for (const c of codeList) if (!map[family].codes.includes(c)) map[family].codes.push(c);
+    }
+    return map;
+  }, [courses]);
+
+  const [openPrograms, setOpenPrograms] = useState<Record<string, boolean>>(() =>
+    Object.keys(programGroups).reduce((acc, k) => ((acc[k] = true), acc), {} as Record<string, boolean>)
+  );
+  const toggleProgram = (program: string) =>
+    setOpenPrograms((prev) => ({ ...prev, [program]: !prev[program] }));
+
+  // --- Row edit helpers ---
+  type SectionEditable = { section: string; room1: string; room2: string; capacity: string };
+  const toEditable = (row: SectionRow): SectionEditable => ({
+    section: row[2] || "",
+    room1: row[7] || "",
+    room2: row[11] || "",
+    capacity: row[12] || "",
+  });
+  const fromEditable = (row: SectionRow, e: SectionEditable): SectionRow => {
+    const copy = [...row] as SectionRow;
+    copy[2] = e.section;
+    copy[7] = e.room1;
+    copy[11] = e.room2;
+    copy[12] = e.capacity;
+    return copy;
+  };
+
+  const [editingRow, setEditingRow] = useState<{
+    course: Course;
+    index: number;
+    draft: SectionEditable;
+  } | null>(null);
+
+  const startEditRow = (course: Course, index: number) =>
+    setEditingRow({ course, index, draft: toEditable(course.sections[index]) });
+
+  const saveEditRow = () => {
+    if (!editingRow) return;
+    const { course, index, draft } = editingRow;
+    const updatedSections = course.sections.map((r, i) => (i === index ? fromEditable(r, draft) : r));
+    onReplaceCourse(course, { ...course, sections: updatedSections });
+    setEditingRow(null);
+  };
+
+  const cancelEditRow = () => setEditingRow(null);
+
+  // Delete modal state
+  const [deleteAsk, setDeleteAsk] = useState<{ course: Course; index: number } | null>(null);
+  const requestDeleteRow = (course: Course, index: number) => setDeleteAsk({ course, index });
+  const performDeleteRow = () => {
+    if (!deleteAsk) return;
+    const { course, index } = deleteAsk;
+    const next = course.sections.filter((_, i) => i !== index);
+    if (next.length === 0) onRemoveCourse(course);
+    else onReplaceCourse(course, { ...course, sections: next });
+    setDeleteAsk(null);
+  };
+
+  // --- Inline Add Course ---
+  const [activeProgramForAdd, setActiveProgramForAdd] = useState<string | null>(null);
+  const [addDraft, setAddDraft] = useState<{ programCode: string; code: string; title: string; capacity: string }>({
+    programCode: "",
+    code: "",
+    title: "",
+    capacity: "40",
+  });
+
+  const nextSectionCode = (progCourses: Course[], code: string, programCode: string) => {
+    if (!code) return "";
+    const nums: number[] = [];
+    for (const c of progCourses) {
+      if (c.code !== code) continue;
+      if (programCode && !(c.programCodes || []).includes(programCode)) continue;
+      for (const s of c.sections) {
+        const m = /^S(\d+)$/.exec(s[2] || "");
+        if (m) nums.push(parseInt(m[1], 10));
+      }
+    }
+    const base = 11;
+    const next = nums.length ? Math.max(...nums) + 1 : base;
+    return `S${next}`;
+  };
+
+  const handleSaveAdd = (family: string, progCourses: Course[]) => {
+    const code = addDraft.code.trim().toUpperCase();
+    const title = addDraft.title || courseCatalog[code] || "";
+    if (!code || !title || !addDraft.programCode) {
+      alert("Please choose a Program Code and a valid Course Code (with title).");
+      return;
+    }
+    const sectionCode = nextSectionCode(progCourses, code, addDraft.programCode);
+    const newCourse: Course = {
+      code,
+      title,
+      level: "Undergraduate",
+      department: "Department of Software Technology",
+      ids: [id],
+      programs: [family],
+      programCodes: [addDraft.programCode],
+      sections: [
+        [
+          title, // 0
+          "3", // 1
+          sectionCode, // 2
+          "Unassigned", // 3
+          "", "", "", "", // 4..7
+          "", "", "", "", // 8..11
+          addDraft.capacity || "40", // 12
+        ] as SectionRow,
+      ],
+    };
+    onAddCourse(newCourse);
+    setActiveProgramForAdd(null);
+    setAddDraft({ programCode: "", code: "", title: "", capacity: "40" });
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-300 bg-white shadow-sm">
+      <div className="bg-[#21804A] text-white rounded-t-xl px-4 py-3 flex items-center justify-center">
+        <h2 className="text-lg font-semibold text-center">{id}</h2>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {Object.entries(programGroups).map(([family, { courses: progCourses, codes }]) => {
+          const isOpen = openPrograms[family];
+          const isAddingHere = activeProgramForAdd === family;
+
+          return (
+            <div key={family} className="relative rounded-lg border border-gray-300 bg-white overflow-visible">
+              <button
+                onClick={() => toggleProgram(family)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-[#A6B697]/30 hover:bg-[#A6B697]/40 transition"
+              >
+                <span className="font-semibold text-emerald-900 text-left">{family}</span>
+                <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {isOpen && (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse table-fixed">
+                      <colgroup>
+                        <col className="w-[150px]" />
+                        <col className="w-[240px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[160px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[80px]" />
+                        <col className="w-[100px]" />
+                      </colgroup>
+
+                      <thead className="bg-gray-50 text-emerald-800">
+                        <tr className="text-[13px] font-semibold border-b border-gray-300">
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Program Code</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Course Code &amp; Title</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Section</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Faculty</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Day 1</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Begin 1</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">End 1</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Room 1</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Day 2</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Begin 2</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">End 2</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Room 2</th>
+                          <th className="px-3 py-2 text-left border-r border-gray-300">Capacity</th>
+                          <th className="px-3 py-2 text-center">Actions</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {progCourses.flatMap((course) =>
+                          course.sections.map((s, i) => {
+                          const isEditing =
+                            !!editingRow &&
+                            editingRow.course === course &&
+                            editingRow.index === i;
+                            if (isEditing) {
+                              return (
+                                <tr key={`${family}-${course.code}-${(course.programCodes || ['_']).join('+')}-${i}-edit`} className="border-t bg-neutral-50"> 
+                                  <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
+                                  <td className="px-4 py-3 border-r">
+                                    <div className="font-semibold text-emerald-700">{course.code}</div>
+                                    <div className="text-xs text-gray-500">{course.title}</div>
+                                  </td>
+
+                                  <td className="px-3 py-2 border-r">
+                                    <input
+                                      value={editingRow.draft.section}
+                                      onChange={(e) =>
+                                        setEditingRow((p) =>
+                                          p ? { ...p, draft: { ...p.draft, section: e.target.value } } : p
+                                        )
+                                      }
+                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                                    />
+                                  </td>
+
+                                  <td className="px-3 py-2 border-r">
+                                    <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
+                                      {s[3] || "—"}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
+                                  <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
+                                  <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
+
+                                  <td className="px-3 py-2 border-r">
+                                    <input
+                                      value={editingRow.draft.room1}
+                                      onChange={(e) =>
+                                        setEditingRow((p) =>
+                                          p ? { ...p, draft: { ...p.draft, room1: e.target.value } } : p
+                                        )
+                                      }
+                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                                    />
+                                  </td>
+
+                                  <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
+                                  <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
+                                  <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
+
+                                  <td className="px-3 py-2 border-r">
+                                    <input
+                                      value={editingRow.draft.room2}
+                                      onChange={(e) =>
+                                        setEditingRow((p) =>
+                                          p ? { ...p, draft: { ...p.draft, room2: e.target.value } } : p
+                                        )
+                                      }
+                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                                    />
+                                  </td>
+
+                                  <td className="px-3 py-2 border-r">
+                                    <input
+                                      value={editingRow.draft.capacity}
+                                      onChange={(e) =>
+                                        setEditingRow((p) =>
+                                          p ? { ...p, draft: { ...p.draft, capacity: e.target.value } } : p
+                                        )
+                                      }
+                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                                    />
+                                  </td>
+
+                                  <td className="px-3 py-2 text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button
+                                        onClick={saveEditRow}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
+                                        title="Save"
+                                      >
+                                        <Check className="h-4 w-4" strokeWidth={2.5} />
+                                      </button>
+                                      <button
+                                        onClick={cancelEditRow}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
+                                        title="Cancel"
+                                      >
+                                        <X className="h-4 w-4" strokeWidth={2.5} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            // View row
+                            return (
+                              <tr key={`${family}-${course.code}-${(course.programCodes || ['_']).join('+')}-${i}`} className="border-t hover:bg-neutral-50">
+                                <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
+                                <td className="px-4 py-3 border-r font-semibold text-emerald-700">
+                                  {course.code}
+                                  <div className="text-xs text-gray-500">{course.title}</div>
+                                </td>
+                                <td className="px-3 py-2 border-r">{s[2] || "—"}</td>
+                                <td className="px-3 py-2 border-r">
+                                  <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
+                                    {s[3] || "—"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
+                                <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
+                                <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
+                                <td className="px-3 py-2 border-r">{s[7] || "—"}</td>
+                                <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
+                                <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
+                                <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
+                                <td className="px-3 py-2 border-r">{s[11] || "—"}</td>
+                                <td className="px-3 py-2 border-r">{s[12] || "—"}</td>
+                                <td className="px-3 py-2 text-center">
+                                  <div className="flex justify-center gap-3">
+                                    <button
+                                      disabled={globalBusy}
+                                      className="text-emerald-700 hover:text-emerald-900 disabled:opacity-50"
+                                      title="Edit"
+                                      onClick={() => !globalBusy && startEditRow(course, i)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      disabled={globalBusy}
+                                      className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                                      title="Remove"
+                                      onClick={() => !globalBusy && requestDeleteRow(course, i)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      disabled={globalBusy}
+                                      className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                                      title="Remarks"
+                                    >
+                                      <MessageSquareText className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+
+                        {/* Inline Add Row */}
+                        {isAddingHere && (
+                          <tr className="border-t bg-white">
+                            {/* Program Code - SelectBox look */}
+                            <td className="px-3 py-2 border-r">
+                              <div className="relative z-50">
+                                <SelectBox
+                                  value={addDraft.programCode || "Select…"}
+                                  onChange={(v) => setAddDraft((d) => ({ ...d, programCode: v === "Select…" ? "" : v }))}
+                                  options={["Select…", ...codes]}
+                                  disabled={globalBusy}
+                                />
+                              </div>
+                            </td>
+                            {/* Course Code & Title (with datalist) */}
+                            <td className="px-3 py-2 border-r">
+                            <div className="grid gap-2">
+                              <SelectBox
+                                value={addDraft.code || "Select Course"}
+                                onChange={(v) => {
+                                  const code = v === "Select Course" ? "" : v;
+                                  const autoTitle = courseCatalog[code] || "";
+                                  setAddDraft((d) => ({ ...d, code, title: autoTitle || d.title }));
+                                }}
+                                options={["Select Course", ...Object.keys(courseCatalog).sort()]}
+                                disabled={globalBusy}
+                              />
+
+                              <input
+                                value={addDraft.title}
+                                onChange={(e) => setAddDraft((d) => ({ ...d, title: e.target.value }))}
+                                placeholder="Course Title"
+                                className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                              />
+                              </div>
+                            </td>
+
+                            {/* Section (auto) */}
+                            <td className="px-3 py-2 border-r">
+                              {nextSectionCode(progCourses, addDraft.code, addDraft.programCode) || "S—"}
+                            </td>
+
+                            {/* Defaults */}
+                            <td className="px-3 py-2 border-r">
+                              <span className="text-red-600 font-medium">Unassigned</span>
+                            </td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
+
+                            {/* Capacity */}
+                            <td className="px-3 py-2 border-r">
+                              <input
+                                value={addDraft.capacity}
+                                onChange={(e) => setAddDraft((d) => ({ ...d, capacity: e.target.value }))}
+                                className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+
+                              />
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-3 py-2 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50 disabled:opacity-50"
+                                  onClick={() => handleSaveAdd(family, progCourses)}
+                                  disabled={globalBusy}
+                                  title="Save"
+                                >
+                                  <Check className="h-4 w-4" strokeWidth={2.5} />
+                                </button>
+                                <button
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
+                                  onClick={() => {
+                                    setActiveProgramForAdd(null);
+                                    setAddDraft({ programCode: "", code: "", title: "", capacity: "40" });
+                                  }}
+                                  title="Cancel"
+                                >
+                                  <X className="h-4 w-4" strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Add Course button row */}
+                  <div className="flex justify-end px-4 py-3 border-t bg-white">
+                    <button
+                      className={cls(
+                        "mt-2 rounded-md bg-[#21804A] px-4 py-2 text-sm text-white hover:bg-[#18693B]",
+                        globalBusy && "opacity-50 cursor-not-allowed hover:bg-[#21804A]"
+                      )}
+                      onClick={() => !globalBusy && setActiveProgramForAdd(family)}
+                      disabled={globalBusy}
+                    >
+                      + Add Course
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Delete modal (per-ID card) */}
+      {deleteAsk && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-red-600 text-red-700">
+              <X className="h-8 w-8" strokeWidth={2.5} />
+            </div>
+            <h3 className="mb-2 text-center text-2xl font-semibold">Delete this section?</h3>
+            <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteAsk(null)}
+                className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={performDeleteRow}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------- Add Course Panel (kept) ----------------------- */
 function AddCoursePanel({
   onSave,
   onCancel,
@@ -466,7 +696,6 @@ function AddCoursePanel({
     sections: [],
   });
 
-  
   return (
     <div className="rounded-2xl border border-neutral-300 bg-neutral-50 p-4">
       <h3 className="mb-3 text-lg font-semibold">Add Course</h3>
@@ -517,7 +746,16 @@ function AddCoursePanel({
         />
         <MultiSelect
           label="Program"
-          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS", "BS IET-GD", "BS IET-AD"]}
+          options={[
+            "BSIT",
+            "BSIS",
+            "BSCS-ST",
+            "BSCS-NIS",
+            "BSCS-CSE",
+            "BSMS-CS",
+            "BS IET-GD",
+            "BS IET-AD",
+          ]}
           value={data.programs}
           onChange={(vals) => setData({ ...data, programs: vals })}
           placeholder="Choose Program(s)"
@@ -545,436 +783,6 @@ function AddCoursePanel({
   );
 }
 
-function EditCoursePanel({
-  course,
-  onSave,
-  onCancel,
-}: {
-  course: Course;
-  onSave: (updated: Course) => void;
-  onCancel: () => void;
-}) {
-  const [ids, setIds] = useState(course.ids);
-  const [programs, setPrograms] = useState(course.programs);
-
-  return (
-    <div className="rounded-2xl border border-neutral-300 bg-neutral-50 p-4">
-      <h3 className="mb-3 text-lg font-semibold">Edit Course</h3>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Course Code</label>
-          <input
-            value={course.code}
-            disabled
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Course Title</label>
-          <input
-            value={course.title}
-            disabled
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Level</label>
-          <input
-            value={course.level}
-            disabled
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Department</label>
-          <input
-            value={course.department}
-            disabled
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-100 text-gray-500"
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <MultiSelect
-          label="ID"
-          options={["ID 120", "ID 121", "ID 122", "ID 123", "ID 124", "ID 125"]}
-          value={ids}
-          onChange={setIds}
-          placeholder="Choose ID(s)"
-        />
-        <MultiSelect
-          label="Program"
-          options={["BSIT", "BSIS", "BSCS-ST", "BSCS-NIS", "BSCS-CSE", "BSMS-CS", "BS IET-GD", "BS IET-AD"]}
-          value={programs}
-          onChange={setPrograms}
-          placeholder="Choose Program(s)"
-        />
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => onSave({ ...course, ids, programs })}
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
-        >
-          Save Changes
-        </button>
-        <button
-          onClick={onCancel}
-          className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-const DAY_OPTIONS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-
-/* ----------------------- Course Card ----------------------- */
-function CourseCard({
-  course,
-  onUpdateCourse,
-  onEditingChange,
-  onCardBusyChange,
-  globalBusy,
-}: {
-  course: Course;
-  onUpdateCourse: (updated: Course) => void;
-  onEditingChange: (editing: boolean) => void;
-  onCardBusyChange: (code: string, busy: boolean) => void;
-  globalBusy: boolean;
-}) {
-  const [editingCourse, setEditingCourse] = useState(false);
-  const [editData, setEditData] = useState<Course>(course);
-  useEffect(() => setEditData(course), [course]);
-  useEffect(() => {
-    onEditingChange(editingCourse);
-  }, [editingCourse, onEditingChange]);
-
-  const [sections, setSections] = useState<SectionRow[]>(course.sections);
-  const [adding, setAdding] = useState(false);
-  const emptySection: SectionRow = ["","","","","","","","","","","","",""];
-  const [newSection, setNewSection] = useState<SectionRow>(emptySection);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [showDelete, setShowDelete] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (sections !== course.sections) {
-      onUpdateCourse({ ...course, sections });
-    }
-  }, [sections]); 
-
-  // ---- BUSY REPORTING (local -> parent) ----
-  const localBusy = editingCourse || adding || editingIndex !== null || showDelete;
-  useEffect(() => {
-    onCardBusyChange(course.code, localBusy);
-  }, [localBusy, course.code, onCardBusyChange]);
-
-  type SectionEditable = {
-    section: string;
-    room1: string;
-    room2: string;
-    capacity: string;
-  };
-
-  const toEditable = (row: SectionRow): SectionEditable => ({
-    section: row[2] || "",
-    room1: row[7] || "",
-    room2: row[11] || "",
-    capacity: row[12] || "",
-  });
-
-  const fromEditable = (row: SectionRow, e: SectionEditable): SectionRow => {
-    const copy = [...row] as SectionRow;
-    copy[2] = e.section;   // Section
-    copy[7] = e.room1;     // Room 1
-    copy[11] = e.room2;    // Room 2
-    copy[12] = e.capacity; // Capacity
-    return copy;
-  };
-
-  const [editRowDraft, setEditRowDraft] = useState<SectionEditable | null>(null);
-
-  const startEditRow = (i: number) => {
-    setEditingIndex(i);
-    setEditRowDraft(toEditable(sections[i]));
-  };
-  const saveEditRow = () => {
-    if (editingIndex === null || !editRowDraft) return;
-    const updated = [...sections];
-    updated[editingIndex] = fromEditable(sections[editingIndex], editRowDraft);
-    setSections(updated);
-    setEditingIndex(null);
-    setEditRowDraft(null);
-  };
-
-  const confirmDelete = (i: number) => {
-    setDeleteIndex(i);
-    setShowDelete(true);
-  };
-  const handleDelete = () => {
-    if (deleteIndex !== null) setSections((p) => p.filter((_, idx) => idx !== deleteIndex));
-    setShowDelete(false);
-    setDeleteIndex(null);
-  };
-
-  // auto-increment
-  const handleAddSection = () => {
-    if (globalBusy) return;
-
-  const sectionNums = sections
-    .map((s) => {
-      const code = s[2] || "";
-      const match = /^S(\d+)$/.exec(code);
-      return match ? parseInt(match[1], 10) : null;
-    })
-    .filter((n): n is number => n !== null);
-
-  const baseNum = 11; // starting section number
-  const nextNum = sectionNums.length ? Math.max(...sectionNums) + 1 : baseNum;
-  const nextCode = `S${nextNum}`;
-
-  // create a fresh row
-  const copy = [...emptySection] as SectionRow;
-  copy[0] = course.title;   // keep course title
-  copy[1] = "3";            // or set default units if you have it
-  copy[2] = nextCode;
-  copy[3] = "Unassigned";   // default faculty
-
-  // immediately add to sections
-  setSections((prev) => [...prev, copy]);
-
-  // and put into edit mode right away
-  setEditingIndex(sections.length); // new row index
-  setEditRowDraft(toEditable(copy));
-};
-
-
-  const tags = [course.level, course.department, ...course.ids, ...course.programs];
-  const rowActionsDisabled = globalBusy || adding || editingIndex !== null || editingCourse;
-
-  return (
-    <div className="relative rounded-xl border border-gray-300 bg-white p-4 shadow-sm">
-      {/* left accent */}
-      <div className="absolute left-0 top-0 h-full w-2 rounded-l-xl bg-[#21804A]" />
-
-      {/* Header */}
-      <div className="mb-3 flex items-start justify-between">
-        <div className="min-w-0">
-          <h2 className="truncate text-lg font-bold text-[#21804A]">{course.code}</h2>
-          <p className="truncate text-sm text-gray-600">{course.title}</p>
-        </div>
-        {!editingCourse && (
-          <button
-            onClick={() => setEditingCourse(true)}
-            disabled={globalBusy}
-            className={cls(
-              "text-xs text-emerald-700 hover:underline",
-              globalBusy && "cursor-not-allowed opacity-50 hover:no-underline"
-            )}
-          >
-            Edit Course
-          </button>
-        )}
-      </div>
-
-      {/* Tags */}
-      {!editingCourse && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {tags.map((t) => (
-            <span key={t} className={cls("rounded-full px-2 py-1 text-xs font-medium", tagColor(t))}>
-              {t}
-            </span>
-          ))}
-        </div>
-      )}
-      
-      {editingCourse && (
-        <EditCoursePanel
-          course={course}
-          onSave={(updated) => {
-            onUpdateCourse(updated);
-            setEditingCourse(false);
-          }}
-          onCancel={() => setEditingCourse(false)}
-        />
-      )}
-
-{/* Sections */}
-<div>
-  <div className="overflow-x-auto rounded-lg border border-gray-200">
-    <table className="w-full text-sm border-collapse">
-      <thead className="bg-gray-50 text-emerald-800">
-        <tr className="text-[13px] font-semibold">
-          <th className="px-3 py-2 text-left w-[90px]">Section</th>
-          <th className="px-3 py-2 text-left w-[70px]">Units</th>
-          <th className="px-3 py-2 text-left min-w-[220px]">Faculty</th>
-
-          <th className="px-3 py-2 text-left w-[120px]">Day 1</th>
-          <th className="px-3 py-2 text-left w-[100px]">Begin 1</th>
-          <th className="px-3 py-2 text-left w-[100px]">End 1</th>
-          <th className="px-3 py-2 text-left min-w-[120px]">Room 1</th>
-
-          <th className="px-3 py-2 text-left w-[120px]">Day 2</th>
-          <th className="px-3 py-2 text-left w-[100px]">Begin 2</th>
-          <th className="px-3 py-2 text-left w-[100px]">End 2</th>
-          <th className="px-3 py-2 text-left min-w-[120px]">Room 2</th>
-
-          <th className="px-3 py-2 text-left w-[90px]">Capacity</th>
-          <th className="px-3 py-2 text-center w-[90px]">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody className="align-middle">
-        {sections.map((row, i) =>
-          editingIndex === i ? (
-            <tr key={`${row[2]}-${i}`} className="border-t">
-              {/* Section (editable) */}
-              <td className="px-3 py-2">
-                <input
-                  value={editRowDraft?.section || ""}
-                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), section: e.target.value }))}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                />
-              </td>
-
-              {/* Units (read-only) */}
-              <td className="px-3 py-2">{row[1]}</td>
-
-              {/* Faculty (read-only) */}
-              <td className="px-3 py-2">
-                <span className={row[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>{row[3]}</span>
-              </td>
-
-              {/* Day 1 / Begin 1 / End 1 (read-only) */}
-              <td className="px-3 py-2">{row[4] || "—"}</td>
-              <td className="px-3 py-2">{fmtTime(row[5])}</td>
-              <td className="px-3 py-2">{fmtTime(row[6])}</td>
-
-              {/* Room 1 (editable) */}
-              <td className="px-3 py-2">
-                <input
-                  value={editRowDraft?.room1 || ""}
-                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room1: e.target.value }))}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                />
-              </td>
-
-              {/* Day 2 / Begin 2 / End 2 (read-only) */}
-              <td className="px-3 py-2">{row[8] || "—"}</td>
-              <td className="px-3 py-2">{fmtTime(row[9])}</td>
-              <td className="px-3 py-2">{fmtTime(row[10])}</td>
-
-              {/* Room 2 (editable) */}
-              <td className="px-3 py-2">
-                <input
-                  value={editRowDraft?.room2 || ""}
-                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), room2: e.target.value }))}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                />
-              </td>
-
-              {/* Capacity (editable) */}
-              <td className="px-3 py-2">
-                <input
-                  value={editRowDraft?.capacity || ""}
-                  onChange={(e) => setEditRowDraft((p) => ({ ...(p as SectionEditable), capacity: e.target.value }))}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm"
-                />
-              </td>
-
-              {/* Save */}
-              <td className="px-3 py-2">
-                <div className="flex justify-center">
-                  <button
-                    onClick={saveEditRow}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
-                  >
-                    <Check className="h-4 w-4" strokeWidth={2.5} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            <tr key={`${row[2]}-${i}`} className="border-t hover:bg-neutral-50">
-              <td className="px-3 py-2 font-medium">{row[2]}</td>
-              <td className="px-3 py-2">{row[1]}</td>
-              <td className="px-3 py-2">
-                <span className={row[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>{row[3]}</span>
-              </td>
-
-              <td className="px-3 py-2">{row[4] || "—"}</td>
-              <td className="px-3 py-2">{fmtTime(row[5])}</td>
-              <td className="px-3 py-2">{fmtTime(row[6])}</td>
-              <td className="px-3 py-2">{row[7] || "—"}</td>
-
-              <td className="px-3 py-2">{row[8] || "—"}</td>
-              <td className="px-3 py-2">{fmtTime(row[9])}</td>
-              <td className="px-3 py-2">{fmtTime(row[10])}</td>
-              <td className="px-3 py-2">{row[11] || "—"}</td>
-
-              <td className="px-3 py-2">{row[12] || "—"}</td>
-              <td className="px-3 py-2">
-                <div className="flex justify-center gap-2">
-                  <button
-                    onClick={() => !rowActionsDisabled && startEditRow(i)}
-                    disabled={rowActionsDisabled}
-                    className="text-gray-500 hover:text-black disabled:opacity-50"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => !rowActionsDisabled && confirmDelete(i)}
-                    disabled={rowActionsDisabled}
-                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
-  </div>
-
-  {/* Add Section button stays below the table */}
-  {!adding && editingIndex === null && !editingCourse && (
-    <button
-      onClick={handleAddSection}
-      disabled={globalBusy}
-      className="mt-4 inline-flex items-center gap-2 rounded-md border border-[#21804A] px-3 py-2 text-sm text-[#21804A] hover:bg-[#21804A]/10 disabled:opacity-50"
-    >
-      + Add Section
-    </button>
-  )}
-</div>
-
-      {/* Delete Modal */}
-      {showDelete && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4">Are you sure?</h3>
-            <p className="mb-6 text-sm text-gray-600">This action cannot be undone.</p>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowDelete(false)} className="px-4 py-2 border rounded-lg">Cancel</button>
-              <button onClick={handleDelete} className="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 /* ----------------------- Workflow Chips ----------------------- */
 const WorkflowChips = () => {
   const steps = [
@@ -982,28 +790,21 @@ const WorkflowChips = () => {
     "Office Manager",
     "APO",
     "Office Assistant",
-    "Department Chair",
-    "Dean",
-    "Office Assistant",
-    "Provost",
+    "Department Chair"
   ];
 
-  let seenFirstApo = false; // will flip true after the first APO
-
+  let seenFirstApo = false;
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
       {steps.map((step, i) => {
         const isFirstApo = step === "APO" && !seenFirstApo;
         if (isFirstApo) seenFirstApo = true;
-
         return (
           <React.Fragment key={`${step}-${i}`}>
             <span
               className={cls(
                 "rounded-full px-3 py-1 text-[13px] font-medium border",
-                isFirstApo
-                  ? "border-emerald-700 bg-emerald-700 text-white" // only the first APO
-                  : "border-gray-300 bg-white text-gray-800"
+                isFirstApo ? "border-emerald-700 bg-emerald-700 text-white" : "border-gray-300 bg-white text-gray-800"
               )}
             >
               {step}
@@ -1016,8 +817,7 @@ const WorkflowChips = () => {
   );
 };
 
-
-// --- Simple CSV parser that respects quotes and newlines ---
+/* ----------------------- CSV helper ----------------------- */
 function parseCSV(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -1027,19 +827,18 @@ function parseCSV(text: string): string[][] {
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     const next = text[i + 1];
-
     if (ch === '"') {
-      if (inQuotes && next === '"') { // escaped quote ""
+      if (inQuotes && next === '"') {
         cell += '"';
         i++;
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === "," && !inQuotes) {
       row.push(cell);
       cell = "";
-    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-      if (ch === '\r' && next === '\n') i++; // handle CRLF
+    } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
+      if (ch === "\r" && next === "\n") i++;
       row.push(cell);
       rows.push(row);
       row = [];
@@ -1052,9 +851,7 @@ function parseCSV(text: string): string[][] {
     row.push(cell);
     rows.push(row);
   }
-  return rows
-    .map(r => r.map(c => c.trim()))
-    .filter(r => r.some(c => c !== "")); // drop empty lines
+  return rows.map((r) => r.map((c) => c.trim())).filter((r) => r.some((c) => c !== ""));
 }
 
 /* ----------------------- Page ----------------------- */
@@ -1066,43 +863,37 @@ export default function CourseOfferingsScreen() {
   const [idFilter, setIdFilter] = useState("All ID");
   const [showApprove, setShowApprove] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [showForward, setShowForward] = useState(false);
 
- const filteredCourses = courses.filter((c) => {
-  const q = search.toLowerCase();
+  const filteredCourses = courses.filter((c) => {
+    const N = (s: string) => norm(s, { upper: false }); // lower, trimmed, spaces collapsed
+    const q = N(search);
 
-  const matchesSearch =
-    !q ||
-    // ---- Course-level fields ----
-    c.code.toLowerCase().includes(q) ||
-    c.title.toLowerCase().includes(q) ||
-    c.level.toLowerCase().includes(q) ||
-    c.department.toLowerCase().includes(q) ||
-    c.ids.some((id) => id.toLowerCase().includes(q)) ||
-    c.programs.some((p) => p.toLowerCase().includes(q)) ||
-    // ---- Section-level fields ----
-    c.sections.some((s) =>
-      [
-        s[2], // Section code (e.g. S11)
-        s[3], // Faculty
-        s[4], s[5], s[6], // Day 1, Begin 1, End 1
-        s[7], // Room 1
-        s[8], s[9], s[10], // Day 2, Begin 2, End 2
-        s[11], // Room 2
-        s[12], // Capacity
-        fmtTime(s[5]), fmtTime(s[6]), fmtTime(s[9]), fmtTime(s[10]), // formatted times like 07:30
-      ]
-        .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(q))
-    );
+    const matchesSearch =
+      !q ||
+      N(c.code).includes(q) ||
+      N(c.title).includes(q) ||
+      N(c.level).includes(q) ||
+      N(c.department).includes(q) ||
+      c.ids.some((id) => N(id).includes(q)) ||
+      c.programs.some((p) => N(p).includes(q)) ||
+      c.sections.some((s) =>
+        [
+          s[2], s[3], s[4], s[5], s[6], s[7],
+          s[8], s[9], s[10], s[11], s[12],
+          fmtTime(s[5]), fmtTime(s[6]), fmtTime(s[9]), fmtTime(s[10])
+        ]
+          .filter(Boolean)
+          .some((v) => N(v).includes(q))
+      );
 
-  // ---- Filter dropdown matches ----
-  const matchesLevel = level === "All Levels" || c.level === level;
-  const matchesDept = department === "All Departments" || c.department === department;
-  const matchesId = idFilter === "All ID" || c.ids.includes(idFilter);
-  const matchesProgram = program === "All Programs" || c.programs.includes(program);
+    const matchesLevel = level === "All Levels" || c.level === level;
+    const matchesDept = department === "All Departments" || c.department === department;
+    const matchesId = idFilter === "All ID" || c.ids.includes(idFilter);
+    const matchesProgram = program === "All Programs" || c.programs.includes(program);
 
-  return matchesSearch && matchesLevel && matchesDept && matchesId && matchesProgram;
-});
+    return matchesSearch && matchesLevel && matchesDept && matchesId && matchesProgram;
+  });
 
   const updateCourse = (updated: Course) =>
     setCourses((prev) => prev.map((c) => (c.code === updated.code ? updated : c)));
@@ -1114,113 +905,125 @@ export default function CourseOfferingsScreen() {
   };
 
   const [editingCourseCode, setEditingCourseCode] = useState<string | null>(null);
-
-  // Track per-card busy state and compute global busy
   const [busyByCourse, setBusyByCourse] = useState<Record<string, boolean>>({});
   const handleCardBusy = (code: string, busy: boolean) =>
     setBusyByCourse((prev) => (prev[code] === busy ? prev : { ...prev, [code]: busy }));
 
-  // Busy if adding course OR a course edit is open OR any card reported busy
-  const busy =
-    addingCourse || editingCourseCode !== null || Object.values(busyByCourse).some(Boolean);
+  const busy = addingCourse || editingCourseCode !== null || Object.values(busyByCourse).some(Boolean);
 
- const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
 
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const text = (event.target?.result as string) ?? "";
-    const rows = parseCSV(text);
-    if (!rows.length) return;
+      const rows = parseCSV(text);
+      if (!rows.length) {
+        alert("⚠️ CSV is empty or invalid!");
+        return;
+      }
 
-    // headers (case-insensitive) + strip BOM from first header if present
-    const headerRow = rows[0].map((h, idx) =>
-      idx === 0 ? h.replace(/^\uFEFF/, "").toLowerCase() : h.toLowerCase()
-    );
-    const dataRows = rows.slice(1);
+      const headerRow = rows[0].map((h, idx) => (idx === 0 ? h.replace(/^\uFEFF/, "").toLowerCase() : h.toLowerCase()));
+      const dataRows = rows.slice(1);
+      const idxOf = (key: string) => headerRow.indexOf(key.toLowerCase());
+      const get = (cols: string[], key: string) => {
+        const i = idxOf(key);
+        return i === -1 ? "" : cols[i]?.trim() ?? "";
+      };
 
-    const idxOf = (key: string) => headerRow.indexOf(key.toLowerCase());
-    const get = (cols: string[], key: string) => {
-      const i = idxOf(key);
-      if (i === -1) return "";
-      return cols[i] ?? "";
+      const courseMap: Record<string, Course> = {};
+      const sectionCounter: Record<string, number> = {};
+
+      for (const cols of dataRows) {
+        // raw
+        const rawId = get(cols, "id");
+        const rawProgram = get(cols, "program");
+        const rawProgCode = get(cols, "program code");
+        const rawCode = get(cols, "course code");
+        const rawTitle = get(cols, "course title");
+        const rawDept = get(cols, "department");
+        const rawFaculty = get(cols, "faculty");
+        const rawCap = get(cols, "capacity");
+
+        // normalized (keys upper, title lower to keep accents/search friendly)
+        const id = norm(rawId);
+        const program = norm(rawProgram);
+        const programCode = norm(rawProgCode);
+        const code = norm(rawCode);
+        const title = norm(rawTitle, { upper: false });
+        const faculty = rawFaculty?.trim() ? rawFaculty.trim() : "Unassigned";
+        const cap = rawCap?.trim() || "40";
+
+        if (!id || !programCode || !code || !title) continue;
+
+        // section counter per *unique group*
+        const counterKey = `${id}|${program}|${programCode}|${code}`;
+        if (!sectionCounter[counterKey]) sectionCounter[counterKey] = 11;
+        const sectionCode = `S${sectionCounter[counterKey]++}`;
+
+        // unify by unique group
+        const uniqueKey = counterKey;
+        if (!courseMap[uniqueKey]) {
+          courseMap[uniqueKey] = {
+            code,                          // normalized upper for keying
+            title: rawTitle.trim(),        // keep original casing for display
+            level: "Undergraduate",
+            department:
+              (rawDept as Course["department"]) || "Department of Software Technology",
+            ids: [id],
+            programs: [program],
+            programCodes: [programCode],
+            sections: [],
+          };
+        }
+
+        const newSection: SectionRow = [
+          courseMap[uniqueKey].title,
+          "3",
+          sectionCode,
+          faculty,
+          "", "", "", "",
+          "", "", "", "",
+          cap,
+        ];
+        courseMap[uniqueKey].sections.push(newSection);
+      }
+
+      const loaded = Object.values(courseMap);
+      if (!loaded.length) {
+        alert("⚠️ No valid course data found in CSV!");
+        return;
+      }
+
+      setCourses(loaded);
+      alert("✅ CSV imported successfully!");
     };
 
-    const courseMap: Record<string, Course> = {};
-    const baseSectionNum = 11;
-
-    for (const cols of dataRows) {
-      const code = get(cols, "course code");
-      const title = get(cols, "course title");
-      if (!code || !title) continue;
-
-      const level = (get(cols, "levels") || "Undergraduate") as Course["level"];
-      const dept =
-        (get(cols, "departments") || "Department of Software Technology") as Course["department"];
-      const id = get(cols, "id") || "Unassigned";
-      const program = get(cols, "program") || "Unassigned";
-
-      // init course
-      if (!courseMap[code]) {
-        courseMap[code] = {
-          code,
-          title,
-          level,
-          department: dept,
-          ids: [],
-          programs: [],
-          sections: [],
-        };
-      }
-      const course = courseMap[code];
-      if (id && !course.ids.includes(id)) course.ids.push(id);
-      if (program && !course.programs.includes(program)) course.programs.push(program);
-
-      // read faculty & schedule safely (commas inside quotes OK)
-      const faculty = get(cols, "faculty") || "Unassigned";
-      const day1   = get(cols, "day 1");
-      const b1     = get(cols, "begin 1");
-      const e1     = get(cols, "end 1");
-      const day2   = get(cols, "day 2");
-      const b2     = get(cols, "begin 2");
-      const e2     = get(cols, "end 2");
-      const room1 = get(cols, "room 1") || "ONLINE"; 
-      const room2 = get(cols, "room 2") || "";       
-      const cap    = get(cols, "capacity") || "40";
-
-      // section code (S11, S12, ...)
-      const sectionNum = baseSectionNum + course.sections.length;
-      const sectionCode = `S${sectionNum}`;
-
-      const newSection: SectionRow = [
-        title,          // 0 Course Title
-        "3",            // 1 Units (default)
-        sectionCode,    // 2 Section
-        faculty,        // 3 Faculty
-        day1, b1, e1,   // 4–6 Day1
-        room1,          // 7 Room1
-        day2, b2, e2,   // 8–10 Day2
-        room2 || "",    // 11 Room2 (optional)
-        cap             // 12 Capacity
-      ];
-
-      course.sections.push(newSection);
-    }
-
-    setCourses(Object.values(courseMap));
-    alert("Import complete: faculty & schedules are now placed in the correct columns.");
+    reader.readAsText(file);
   };
 
-  reader.readAsText(file);
-};
+  const courseCatalog = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of courses) if (c.code && c.title && !map[c.code]) map[c.code] = c.title;
+    return map;
+  }, [courses]);
+
+  const replaceCourse = (prevCourse: Course, updated: Course) => {
+    setCourses((arr) => arr.map((c) => (c === prevCourse ? updated : c)));
+  };
+  const removeCourse = (target: Course) => {
+    setCourses((arr) => arr.filter((c) => c !== target));
+  };
 
   return (
     <div className="min-h-screen w-full bg-gray-50 text-slate-900">
-      <ApoTopBar fullName="Hazel Ventura" role="Academic Programming Officer" />
-      <ApoTabs />
+      <TopBar fullName="Hazel Ventura" role="Academic Programming Officer" />
+      <Tabs />
+
       <main className="p-6 w-full">
-        {/* search + filters card */}
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm mb-6">
           <div className="relative min-w-[220px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
@@ -1235,6 +1038,7 @@ export default function CourseOfferingsScreen() {
               )}
             />
           </div>
+
           <SelectBox
             value={level}
             onChange={setLevel}
@@ -1276,114 +1080,273 @@ export default function CourseOfferingsScreen() {
             disabled={busy}
           />
 
-          <button
-            onClick={() => setShowApprove(true)}
-            disabled={busy}
-            className={cls(
-              "ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110",
-              busy && "opacity-50 cursor-not-allowed hover:brightness-100"
-            )}
-            title={busy ? "Finish current action first" : "Approve"}
-          >
-            <CheckCheck className="h-4 w-4" />
-            Approve
-          </button>
+        <button
+          onClick={() => setShowForward(true)}
+          disabled={busy}
+          className={cls(
+            "ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110",
+            busy && "opacity-50 cursor-not-allowed hover:brightness-100"
+          )}
+          title={busy ? "Finish current action first" : "Forward"}
+        >
+          <Send className="h-4 w-4" />
+          Forward
+        </button>
         </div>
 
         <div className="rounded-xl bg-white shadow-sm border border-gray-200 p-6 w-full">
-        {/* header row */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-bold">Course Offerings</h2>
-            <p className="text-sm text-gray-500">Term 1 AY 2025-2026</p>
-          </div>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold">Course Offerings</h2>
+              <p className="text-sm text-gray-500">Term 1 AY 2025-2026</p>
+            </div>
 
-          {/* --- Import CSV button --- */}
-          <div>
             <label className="cursor-pointer inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110">
               <Upload className="h-4 w-4" />
               Import CSV
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleImportCSV}
-                className="hidden"
-              />
+              <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
             </label>
           </div>
-          </div>
 
-          {/* workflow chips */}
+          {/* Workflow */}
           <div className="my-4">
             <WorkflowChips />
           </div>
 
-          {/* course cards */}
+          {/* ID Cards */}
           <div className="space-y-6">
-            {filteredCourses.map((c) => (
-              <CourseCard
-                key={c.code}
-                course={c}
-                onUpdateCourse={updateCourse}
-                onEditingChange={(isEditing) => {
-                  setEditingCourseCode(isEditing ? c.code : null);
-                  if (!isEditing) handleCardBusy(c.code, false);
-                }}
-                onCardBusyChange={handleCardBusy}
-                globalBusy={busy && !busyByCourse[c.code]}
-              />
-            ))}
+            {[...new Set(filteredCourses.flatMap((c) => c.ids))].map((id) => {
+              const idCourses = filteredCourses.filter((c) => c.ids.includes(id));
+              if (!idCourses.length) return null;
+              return (
+                <IDCard
+                  key={id}
+                  id={id}
+                  courses={idCourses}
+                  globalBusy={busy}
+                  onAddCourse={addCourse}
+                  onReplaceCourse={replaceCourse}
+                  onRemoveCourse={removeCourse}
+                  courseCatalog={courseCatalog}
+                />
+              );
+            })}
           </div>
 
-          {/* Approve confirmation modal */}
-          {showApprove && (
+          {showForward && (
             <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
               <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
-                  <Check className="h-8 w-8" strokeWidth={2.5} />
-                </div>
-                <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
-                <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
-                  Please confirm that this is the final Course Offerings to be submitted to the
-                  {" "}
-                  <span className="font-semibold">Office Manager</span> for faculty loading. Once submitted, this action cannot be undone and the button will be disabled.
-                </p>
-                <div className="flex justify-end gap-2">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-emerald-700">
+                    Forward Course Offerings, Term 1 AY 2025–2026
+                  </h3>
                   <button
-                    onClick={() => setShowApprove(false)}
-                    className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
+                    onClick={() => setShowForward(false)}
+                    className="rounded-full p-1 hover:bg-gray-100"
+                  >
+                    <X className="h-5 w-5 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Attached file */}
+                <div className="border border-gray-200 bg-gray-50 p-3 rounded-lg text-sm flex items-center justify-between mb-4">
+                  <span>
+                    📎 Attached file:{" "}
+                    <strong>Course_Offerings_Term1_AY2025-2026.pdf</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      try {
+                        const container =
+                          document.querySelector(".space-y-6") ||
+                          document.querySelector(".space-y-4") ||
+                          document.querySelector("[data-course-offerings]");
+
+                        if (!container) {
+                          alert("⚠️ No course offerings data found on this page.");
+                          return;
+                        }
+
+                        const courseData = container.cloneNode(true) as HTMLElement;
+                        courseData.querySelectorAll("button, svg, select, input").forEach((el) => el.remove());
+                        courseData.querySelectorAll("th:last-child, td:last-child").forEach((el) => el.remove());
+
+                        // 🧩 Create an iframe dynamically
+                        const iframe = document.createElement("iframe");
+                        iframe.style.position = "fixed";
+                        iframe.style.top = "0";
+                        iframe.style.left = "0";
+                        iframe.style.width = "100%";
+                        iframe.style.height = "100%";
+                        iframe.style.background = "white";
+                        iframe.style.border = "none";
+                        iframe.style.zIndex = "9999";
+                        document.body.appendChild(iframe);
+
+                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (!doc) return;
+
+                        doc.open();
+                        doc.write(`
+                          <html>
+                            <head>
+                              <title>Course Offerings — Term 1 AY2025–2026</title>
+                              <style>
+                                body {
+                                  font-family: Arial, sans-serif;
+                                  padding: 20px;
+                                  background-color: #fff;
+                                  color: #111;
+                                }
+                                h2 {
+                                  color: #1e6f45;
+                                  margin-bottom: 10px;
+                                }
+                                p {
+                                  font-size: 14px;
+                                  color: #333;
+                                  margin-bottom: 20px;
+                                }
+                                table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-top: 15px;
+                                }
+                                th, td {
+                                  border: 1px solid #ccc;
+                                  padding: 6px 8px;
+                                  text-align: center;
+                                  font-size: 13px;
+                                }
+                                th {
+                                  background-color: #f7f7f7;
+                                  color: #064e3b;
+                                }
+                                .rounded-xl {
+                                  border: 1px solid #ccc;
+                                  border-radius: 8px;
+                                  padding: 10px;
+                                  margin-bottom: 20px;
+                                  background: #fff;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                .pdf-button {
+                                  background-color: #1e6f45;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px 14px;
+                                  border-radius: 6px;
+                                  cursor: pointer;
+                                  font-size: 13px;
+                                  font-weight: 500;
+                                  margin-bottom: 15px;
+                                }
+                                .pdf-button:hover {
+                                  background-color: #2f855a;
+                                }
+                                .close-button {
+                                  background-color: #b91c1c;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px 14px;
+                                  border-radius: 6px;
+                                  cursor: pointer;
+                                  font-size: 13px;
+                                  font-weight: 500;
+                                  margin-left: 8px;
+                                }
+                                .close-button:hover {
+                                  background-color: #7f1d1d;
+                                }
+                                @media print {
+                                  .pdf-button, .close-button {
+                                    display: none;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <button class="pdf-button" onclick="window.print()">📄 Download as PDF</button>
+                              <button class="close-button" onclick="parent.document.body.removeChild(parent.document.querySelector('iframe'));">✖ Close</button>
+                              <h2>Course Offerings — Term 1, AY 2025–2026</h2>
+                              <p>This document shows all current course offerings forwarded for review.</p>
+                              ${courseData.outerHTML}
+                            </body>
+                          </html>
+                        `);
+                        doc.close();
+                      } catch (err) {
+                        console.error(err);
+                        alert("⚠️ Could not render preview. Check console for details.");
+                      }
+                    }}
+                    className="text-emerald-700 hover:underline text-sm z-50 relative"
+                  >
+                    View
+                  </button>
+
+                </div>
+
+                {/* Email fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium">To:</label>
+                    <input
+                      type="email"
+                      placeholder="Recipient email"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Subject:</label>
+                    <input
+                      placeholder="Forwarding Course Offerings for Approval"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Message:</label>
+                    <textarea
+                      placeholder=" "
+                      className="h-40 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2 mt-5">
+                  <button
+                    onClick={() => setShowForward(false)}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => setShowApprove(false)}
+                    onClick={() => {
+                      alert("📧 Course Offerings forwarded successfully!");
+                      setShowForward(false);
+                    }}
                     className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                   >
-                    Yes, I Approve
+                    Send
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Add course panel */}
-          {addingCourse && (
+          {/* (Optional) Add course panel outside cards */}
+          {false && (
             <div className="mt-6">
-              <AddCoursePanel onSave={addCourse} onCancel={() => setAddingCourse(false)} />
+              <AddCoursePanel onSave={addCourse} onCancel={() => {}} />
             </div>
           )}
-
-          <button
-            className={cls(
-              "mt-6 rounded-md bg-[#21804A] px-4 py-2 text-sm text-white hover:bg-[#18693B]",
-              busy && "opacity-50 cursor-not-allowed hover:bg-[#21804A]"
-            )}
-            onClick={() => !busy && setAddingCourse(true)}
-            disabled={busy}
-            title={busy ? "Finish current action first" : "Add a new course"}
-          >
-            + Add Course
-          </button>
         </div>
       </main>
     </div>
