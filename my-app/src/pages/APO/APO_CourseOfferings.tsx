@@ -3,12 +3,12 @@ import {
   Edit,
   Trash2,
   Check,
-  CheckCheck,
   Search,
   ChevronDown,
   Upload,
   MessageSquareText,
   X,
+  Send
 } from "lucide-react";
 import TopBar from "../../component/TopBar";
 import Tabs from "../../component/Tabs";
@@ -546,34 +546,25 @@ function IDCard({
                             </td>
                             {/* Course Code & Title (with datalist) */}
                             <td className="px-3 py-2 border-r">
-                              <div className="grid gap-2">
-                                <input
-                                  list={`course-codes-${family}-${id}`}
-                                  value={addDraft.code}
-                                  onChange={(e) => {
-                                    const code = e.target.value.toUpperCase();
-                                    const autoTitle = courseCatalog[code] || "";
-                                    setAddDraft((d) => ({ ...d, code, title: autoTitle || d.title }));
-                                  }}
-                                  placeholder="Course Code"
-                                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                />
-                                <datalist id={`course-codes-${family}-${id}`}>
-                                  {Object.keys(courseCatalog)
-                                    .sort()
-                                    .map((c) => (
-                                      <option key={c} value={c} />
-                                    ))}
-                                </datalist>
+                            <div className="grid gap-2">
+                              <SelectBox
+                                value={addDraft.code || "Select Course"}
+                                onChange={(v) => {
+                                  const code = v === "Select Course" ? "" : v;
+                                  const autoTitle = courseCatalog[code] || "";
+                                  setAddDraft((d) => ({ ...d, code, title: autoTitle || d.title }));
+                                }}
+                                options={["Select Course", ...Object.keys(courseCatalog).sort()]}
+                                disabled={globalBusy}
+                              />
 
-                                <input
-                                  value={addDraft.title}
-                                  onChange={(e) => setAddDraft((d) => ({ ...d, title: e.target.value }))}
-                                  placeholder="Course Title"
-                                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                />
+                              <input
+                                value={addDraft.title}
+                                onChange={(e) => setAddDraft((d) => ({ ...d, title: e.target.value }))}
+                                placeholder="Course Title"
+                                className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                                focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                              />
                               </div>
                             </td>
 
@@ -593,6 +584,7 @@ function IDCard({
                             <td className="px-3 py-2 border-r">—</td>
                             <td className="px-3 py-2 border-r">—</td>
                             <td className="px-3 py-2 border-r">—</td>
+                            <td className="px-3 py-2 border-r">—</td>
 
                             {/* Capacity */}
                             <td className="px-3 py-2 border-r">
@@ -600,7 +592,7 @@ function IDCard({
                                 value={addDraft.capacity}
                                 onChange={(e) => setAddDraft((d) => ({ ...d, capacity: e.target.value }))}
                                 className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-           focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
 
                               />
                             </td>
@@ -798,10 +790,7 @@ const WorkflowChips = () => {
     "Office Manager",
     "APO",
     "Office Assistant",
-    "Department Chair",
-    "Dean",
-    "Office Assistant",
-    "Provost",
+    "Department Chair"
   ];
 
   let seenFirstApo = false;
@@ -874,6 +863,7 @@ export default function CourseOfferingsScreen() {
   const [idFilter, setIdFilter] = useState("All ID");
   const [showApprove, setShowApprove] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [showForward, setShowForward] = useState(false);
 
   const filteredCourses = courses.filter((c) => {
     const N = (s: string) => norm(s, { upper: false }); // lower, trimmed, spaces collapsed
@@ -1090,18 +1080,18 @@ export default function CourseOfferingsScreen() {
             disabled={busy}
           />
 
-          <button
-            onClick={() => setShowApprove(true)}
-            disabled={busy}
-            className={cls(
-              "ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110",
-              busy && "opacity-50 cursor-not-allowed hover:brightness-100"
-            )}
-            title={busy ? "Finish current action first" : "Approve"}
-          >
-            <CheckCheck className="h-4 w-4" />
-            Approve
-          </button>
+        <button
+          onClick={() => setShowForward(true)}
+          disabled={busy}
+          className={cls(
+            "ml-auto inline-flex items-center gap-2 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110",
+            busy && "opacity-50 cursor-not-allowed hover:brightness-100"
+          )}
+          title={busy ? "Finish current action first" : "Forward"}
+        >
+          <Send className="h-4 w-4" />
+          Forward
+        </button>
         </div>
 
         <div className="rounded-xl bg-white shadow-sm border border-gray-200 p-6 w-full">
@@ -1144,31 +1134,207 @@ export default function CourseOfferingsScreen() {
             })}
           </div>
 
-          {/* Approve modal */}
-          {showApprove && (
+          {showForward && (
             <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 p-4">
               <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-600 text-emerald-700">
-                  <Check className="h-8 w-8" strokeWidth={2.5} />
-                </div>
-                <h3 className="mb-2 text-center text-2xl font-semibold">Are you sure?</h3>
-                <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
-                  Please confirm that this is the final Course Offerings to be submitted to the{" "}
-                  <span className="font-semibold">Office Manager</span> for faculty loading. Once submitted, this action
-                  cannot be undone and the button will be disabled.
-                </p>
-                <div className="flex justify-end gap-2">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-emerald-700">
+                    Forward Course Offerings, Term 1 AY 2025–2026
+                  </h3>
                   <button
-                    onClick={() => setShowApprove(false)}
-                    className="rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm hover:bg-neutral-200"
+                    onClick={() => setShowForward(false)}
+                    className="rounded-full p-1 hover:bg-gray-100"
+                  >
+                    <X className="h-5 w-5 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Attached file */}
+                <div className="border border-gray-200 bg-gray-50 p-3 rounded-lg text-sm flex items-center justify-between mb-4">
+                  <span>
+                    📎 Attached file:{" "}
+                    <strong>Course_Offerings_Term1_AY2025-2026.pdf</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      try {
+                        const container =
+                          document.querySelector(".space-y-6") ||
+                          document.querySelector(".space-y-4") ||
+                          document.querySelector("[data-course-offerings]");
+
+                        if (!container) {
+                          alert("⚠️ No course offerings data found on this page.");
+                          return;
+                        }
+
+                        const courseData = container.cloneNode(true) as HTMLElement;
+                        courseData.querySelectorAll("button, svg, select, input").forEach((el) => el.remove());
+                        courseData.querySelectorAll("th:last-child, td:last-child").forEach((el) => el.remove());
+
+                        // 🧩 Create an iframe dynamically
+                        const iframe = document.createElement("iframe");
+                        iframe.style.position = "fixed";
+                        iframe.style.top = "0";
+                        iframe.style.left = "0";
+                        iframe.style.width = "100%";
+                        iframe.style.height = "100%";
+                        iframe.style.background = "white";
+                        iframe.style.border = "none";
+                        iframe.style.zIndex = "9999";
+                        document.body.appendChild(iframe);
+
+                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (!doc) return;
+
+                        doc.open();
+                        doc.write(`
+                          <html>
+                            <head>
+                              <title>Course Offerings — Term 1 AY2025–2026</title>
+                              <style>
+                                body {
+                                  font-family: Arial, sans-serif;
+                                  padding: 20px;
+                                  background-color: #fff;
+                                  color: #111;
+                                }
+                                h2 {
+                                  color: #1e6f45;
+                                  margin-bottom: 10px;
+                                }
+                                p {
+                                  font-size: 14px;
+                                  color: #333;
+                                  margin-bottom: 20px;
+                                }
+                                table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-top: 15px;
+                                }
+                                th, td {
+                                  border: 1px solid #ccc;
+                                  padding: 6px 8px;
+                                  text-align: center;
+                                  font-size: 13px;
+                                }
+                                th {
+                                  background-color: #f7f7f7;
+                                  color: #064e3b;
+                                }
+                                .rounded-xl {
+                                  border: 1px solid #ccc;
+                                  border-radius: 8px;
+                                  padding: 10px;
+                                  margin-bottom: 20px;
+                                  background: #fff;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                .pdf-button {
+                                  background-color: #1e6f45;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px 14px;
+                                  border-radius: 6px;
+                                  cursor: pointer;
+                                  font-size: 13px;
+                                  font-weight: 500;
+                                  margin-bottom: 15px;
+                                }
+                                .pdf-button:hover {
+                                  background-color: #2f855a;
+                                }
+                                .close-button {
+                                  background-color: #b91c1c;
+                                  color: white;
+                                  border: none;
+                                  padding: 8px 14px;
+                                  border-radius: 6px;
+                                  cursor: pointer;
+                                  font-size: 13px;
+                                  font-weight: 500;
+                                  margin-left: 8px;
+                                }
+                                .close-button:hover {
+                                  background-color: #7f1d1d;
+                                }
+                                @media print {
+                                  .pdf-button, .close-button {
+                                    display: none;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <button class="pdf-button" onclick="window.print()">📄 Download as PDF</button>
+                              <button class="close-button" onclick="parent.document.body.removeChild(parent.document.querySelector('iframe'));">✖ Close</button>
+                              <h2>Course Offerings — Term 1, AY 2025–2026</h2>
+                              <p>This document shows all current course offerings forwarded for review.</p>
+                              ${courseData.outerHTML}
+                            </body>
+                          </html>
+                        `);
+                        doc.close();
+                      } catch (err) {
+                        console.error(err);
+                        alert("⚠️ Could not render preview. Check console for details.");
+                      }
+                    }}
+                    className="text-emerald-700 hover:underline text-sm z-50 relative"
+                  >
+                    View
+                  </button>
+
+                </div>
+
+                {/* Email fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium">To:</label>
+                    <input
+                      type="email"
+                      placeholder="Recipient email"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Subject:</label>
+                    <input
+                      placeholder="Forwarding Course Offerings for Approval"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Message:</label>
+                    <textarea
+                      placeholder=" "
+                      className="h-40 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2 mt-5">
+                  <button
+                    onClick={() => setShowForward(false)}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => setShowApprove(false)}
+                    onClick={() => {
+                      alert("📧 Course Offerings forwarded successfully!");
+                      setShowForward(false);
+                    }}
                     className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                   >
-                    Yes, I Approve
+                    Send
                   </button>
                 </div>
               </div>
