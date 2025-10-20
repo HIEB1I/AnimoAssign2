@@ -92,7 +92,7 @@ export default function CHAIR_FacultyService() {
     {
       faculty: "CABREDO, RAFAEL ANGISCO",
       email: "rafael.cabredo@dlsu.edu.ph",
-      department: "Software Technology",
+      department: "Computer Technology",
       course: "CCINFOM",
       units: 3.0,
       day: ["M", "H"],
