@@ -83,7 +83,7 @@ function SelectBox({
 
 /* ---------------- Workflow Chips ---------------- */
 const WorkflowChips = () => {
-  const steps = ["APO", "Office Manager", "Department Chair", "Dean", "Provost"];
+  const steps = ["APO", "Office Manager", "Department Chair"];
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
       {steps.map((step, i) => (

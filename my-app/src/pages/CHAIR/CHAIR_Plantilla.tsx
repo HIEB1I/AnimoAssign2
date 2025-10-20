@@ -46,12 +46,7 @@ const WorkflowChips = () => {
   const steps = [
     "APO",
     "Office Manager",
-    "APO",
-    "Office Assistant",
     "Department Chair",
-    "Dean",
-    "Office Assistant",
-    "Provost",
   ];
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">

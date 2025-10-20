@@ -1,5 +1,5 @@
 // src/OM_LoadAssignment.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AppShell from "../../base/AppShell";
 import { cls } from "../../utilities/cls";
 import {
@@ -50,13 +50,18 @@ function SelectBox({
   }, [open]);
 
   return (
-    <div className={cls("relative min-w-[160px]", className)}>
+    <div className={cls("relative min-w-[120px]", className)}>
       <button
         ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-left text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/30"
-      >
+        className={cls(
+          "w-full rounded-md border border-gray-300 bg-white",
+          "px-1.5 py-1 text-center text-[13px] leading-tight",
+          "shadow-sm focus:ring-2 focus:ring-emerald-500/30"
+        )}
+>
+
         {value || <span className="text-gray-400">{placeholder}</span>}
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
       </button>
@@ -124,17 +129,85 @@ function TextBox({
   );
 }
 
+/* --------- New: Searchable + typeable ComboBox (for Faculty) --------- */
+function ComboBox({
+  value,
+  onChange,
+  options,
+  placeholder = "— Select or type —",
+  className = "",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value ?? "");
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setQuery(value ?? ""), [value]);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => o.toLowerCase().includes(q));
+  }, [options, query]);
+
+  return (
+    <div ref={wrapRef} className={cls("relative", className)}>
+      <input
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/30"
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+          onChange(e.target.value); // make it immediately 'typeable'
+        }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+      />
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+
+      {open && (
+        <div className="absolute z-30 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-gray-300 bg-white shadow-xl">
+          {filtered.length === 0 ? (
+            <div className="px-4 py-2 text-sm text-gray-500">No matches</div>
+          ) : (
+            filtered.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setQuery(opt);
+                  setOpen(false);
+                }}
+                className="block w-full px-4 py-2 text-left text-sm hover:bg-emerald-50"
+              >
+                {opt}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------------- Visual bits ---------------- */
 const WorkflowChips = () => {
-  const steps = [
-    "APO",
-    "Office Manager",
-    "Office Assistant",
-    "Department Chair",
-    "Dean",
-    "Office Assistant",
-    "Provost",
-  ];
+  // Removed Dean, Office Assistant, Provost per request
+  const steps = ["APO", "Office Manager", "Department Chair"];
   const active = new Set(["APO", "Office Manager"]);
   return (
     <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -193,6 +266,51 @@ const timeRange = (begin?: string, end?: string) => {
   const e = toPrettyTime(end);
   return b && e ? `${b}–${e}` : b || e || "—";
 };
+
+// Build Day & Time options
+const DAY_OPTIONS = ["M", "T", "W", "H", "F", "S"];
+function buildTimeStartOptions() {
+  // Class start times: every 1h45m (1h30 + 15m gap)
+  const out: string[] = [];
+  let h = 7;
+  let m = 30;
+
+  while (h < 21) {
+    const hh = String(h).padStart(2, "0");
+    const mm = String(m).padStart(2, "0");
+    out.push(`${hh}${mm}`);
+
+    // move to next start (1h45m later)
+    m += 105;
+    if (m >= 60) {
+      h += Math.floor(m / 60);
+      m = m % 60;
+    }
+    if (h >= 21) break;
+  }
+
+  return out;
+}
+
+function buildTimeEndOptions() {
+  // Each end time = start + 1h30m
+  const starts = buildTimeStartOptions();
+  return starts.map((t) => {
+    const h = parseInt(t.slice(0, 2));
+    const m = parseInt(t.slice(2));
+    let endH = h;
+    let endM = m + 90;
+    if (endM >= 60) {
+      endH += Math.floor(endM / 60);
+      endM = endM % 60;
+    }
+    return `${String(endH).padStart(2, "0")}${String(endM).padStart(2, "0")}`;
+  });
+}
+
+const TIME_BEGIN_OPTIONS = buildTimeStartOptions();
+const TIME_END_OPTIONS = buildTimeEndOptions();
+
 
 /* ---------------- Reusable small components ---------------- */
 const StatusChip = ({ r }: { r: Row }) => {
@@ -499,7 +617,7 @@ export default function OM_LoadAssignment() {
       {
         id: "1",
         course: "GDENG01",
-        title: "",
+        title: "Game Engines 1",
         units: 3,
         section: "S22",
         faculty: "Dr. Cabredo, Rafael",
@@ -516,8 +634,8 @@ export default function OM_LoadAssignment() {
       },
       {
         id: "2",
-        course: "Deloading - GS Coord",
-        title: "",
+        course: "GS Coordinator",
+        title: "Deloading",
         units: 0,
         section: "",
         faculty: "Dr. Samson, Briane",
@@ -535,7 +653,7 @@ export default function OM_LoadAssignment() {
       {
         id: "3",
         course: "CCPROG2",
-        title: "",
+        title: "Programming with Structured Data Types",
         units: 3,
         section: "S21",
         faculty: "Ms. Beredo, Jacklyn",
@@ -553,7 +671,7 @@ export default function OM_LoadAssignment() {
       {
         id: "4",
         course: "CCPROG1",
-        title: "",
+        title: "Logic Formulation and Introductory Programming",
         units: 3,
         section: "S21",
         faculty: "",
@@ -571,7 +689,7 @@ export default function OM_LoadAssignment() {
       {
         id: "5",
         course: "CCINOV8",
-        title: "",
+        title: "Innovation and Technology Management",
         units: 3,
         section: "S25",
         faculty: "Dr. Cheng, Danny",
@@ -674,18 +792,33 @@ export default function OM_LoadAssignment() {
       <>—</>
     );
 
+  // Build faculty options (unique from rows + a few extras)
+  const facultyOptions = useMemo(() => {
+    const set = new Set<string>([
+      "Dr. Cabredo, Rafael",
+      "Dr. Samson, Briane",
+      "Ms. Beredo, Jacklyn",
+      "Dr. Cheng, Danny",
+      "Mr. Dela Cruz, Juan",
+    ]);
+    rows.forEach((r) => r.faculty && set.add(r.faculty));
+    return Array.from(set).sort();
+  }, [rows]);
+
   return (
     <AppShell>
       <main className="w-full px-8 py-8">
         <header className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            Load Assignment <span className="text-gray-400">|</span> <span className="font-black">{term}</span>
-          </h1>
-          <p className="text-sm text-gray-600">Manage course assignments and faculty workload distribution</p>
-        </div>
-      </header>
-
+          <div>
+            <h1 className="text-2xl font-bold">
+              Load Assignment <span className="text-gray-400">|</span>{" "}
+              <span className="font-black">{term}</span>
+            </h1>
+            <p className="text-sm text-gray-600">
+              Manage course assignments and faculty workload distribution
+            </p>
+          </div>
+        </header>
 
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="relative flex-1 min-w-[260px]">
@@ -707,7 +840,13 @@ export default function OM_LoadAssignment() {
                   ? "bg-gray-800 text-white hover:brightness-110"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               )}
-              title={!hasReco ? "No recommendations to save yet" : approved ? "Already approved" : "Save Draft"}
+              title={
+                !hasReco
+                  ? "No recommendations to save yet"
+                  : approved
+                  ? "Already approved"
+                  : "Save Draft"
+              }
             >
               <Save className="h-4 w-4" />
               Save Draft
@@ -721,7 +860,13 @@ export default function OM_LoadAssignment() {
                   ? "bg-emerald-700 text-white hover:brightness-110"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               )}
-              title={!hasReco ? "No recommendations to approve yet" : approved ? "Already approved" : "Approve"}
+              title={
+                !hasReco
+                  ? "No recommendations to approve yet"
+                  : approved
+                  ? "Already approved"
+                  : "Approve"
+              }
             >
               <CheckCheck className="h-4 w-4" />
               Approve
@@ -782,19 +927,21 @@ export default function OM_LoadAssignment() {
             <table className="min-w-full text-sm table-fixed">
               <colgroup>
                 <col className="w-[46px]" />
-                <col className="w-[140px]" />
-                <col className="w-[28%]" />
+                <col className="w-[160px]" />
+                <col className="w-[26%]" />
                 <col className="w-[70px]" />
                 <col className="w-[80px]" />
-                <col className="w-[30%]" />
-                <col className="w-[68px]" />
-                <col className="w-[78px]" />
-                <col className="w-[78px]" />
-                <col className="w-[90px]" />
-                <col className="w-[68px]" />
-                <col className="w-[78px]" />
-                <col className="w-[78px]" />
-                <col className="w-[90px]" />
+                {/* Faculty narrower now */}
+                <col className="w-[18%]" />
+                {/* Day/Time columns widened to keep full text visible */}
+                <col className="w-[72px]" />
+                <col className="w-[96px]" />
+                <col className="w-[96px]" />
+                <col className="w-[96px]" />
+                <col className="w-[72px]" />
+                <col className="w-[96px]" />
+                <col className="w-[96px]" />
+                <col className="w-[96px]" />
                 <col className="w-[80px]" />
                 <col className="w-[100px]" />
                 <col className="w-[110px]" />
@@ -813,8 +960,7 @@ export default function OM_LoadAssignment() {
                       />
                     )}
                   </th>
-                  <th className="text-left px-4 py-2">Course Code</th>
-                  <th className="text-left px-4 py-2">Course Title</th>
+                  <th className="text-left px-4 py-2">Course & Title</th>
                   <th className="text-center px-2 py-2">Units</th>
                   <th className="text-center px-2 py-2">Section</th>
                   <th className="text-left px-4 py-2">Faculty</th>
@@ -850,22 +996,11 @@ export default function OM_LoadAssignment() {
                         )}
                       </td>
 
-                      <td className="px-4 py-2">
-                        <Cell
-                          editable={e.course}
-                          value={r.course}
-                          onChange={(v) => setCell(r.id, "course", v)}
-                          displayClass="font-semibold text-emerald-700"
-                        />
-                      </td>
-
-                      <td className="px-4 py-2">
-                        <Cell
-                          editable={e.title}
-                          value={r.title}
-                          onChange={(v) => setCell(r.id, "title", v)}
-                          className="w-[240px] md:w-[360px] lg:w-[460px]"
-                        />
+                      <td className="px-4 py-2 align-top">
+                        <div>
+                          <div className="font-semibold text-emerald-700">{r.course || "—"}</div>
+                          <div className="text-gray-600 text-sm">{r.title || "—"}</div>
+                        </div>
                       </td>
 
                       <td className="px-2 py-2 text-center">
@@ -889,44 +1024,60 @@ export default function OM_LoadAssignment() {
                       </td>
 
                       <td className="px-4 py-2">
-                        <Cell
-                          editable={e.faculty}
-                          value={r.faculty}
-                          onChange={(v) => setCell(r.id, "faculty", v)}
-                          className="w-[240px] md:w-[340px] lg:w-[420px]"
-                        />
+                        {e.faculty ? (
+                          <ComboBox
+                            value={r.faculty}
+                            onChange={(v) => setCell(r.id, "faculty", v)}
+                            options={facultyOptions}
+                            className="w-[200px] md:w-[240px] lg:w-[280px]"
+                          />
+                        ) : (
+                          <span className="block w-[200px] md:w-[240px] lg:w-[280px] truncate">
+                            {r.faculty || "—"}
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.day1}
-                          value={r.day1}
-                          onChange={(v) => setCell(r.id, "day1", v)}
-                          className="w-[56px]"
-                          align="center"
-                        />
+                        {e.day1 ? (
+                          <SelectBox
+                            value={r.day1}
+                            onChange={(v) => setCell(r.id, "day1", v)}
+                            options={DAY_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.day1 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.begin1}
-                          value={r.begin1}
-                          onChange={(v) => setCell(r.id, "begin1", v)}
-                          className="w-[74px]"
-                          align="center"
-                          placeholder={isRunning ? "" : ""}
-                        />
+                        {e.begin1 ? (
+                          <SelectBox
+                            value={r.begin1}
+                            onChange={(v) => setCell(r.id, "begin1", v)}
+                            options={TIME_BEGIN_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.begin1 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.end1}
-                          value={r.end1}
-                          onChange={(v) => setCell(r.id, "end1", v)}
-                          className="w-[74px]"
-                          align="center"
-                          placeholder={isRunning ? "" : ""}
-                        />
+                        {e.end1 ? (
+                          <SelectBox
+                            value={r.end1}
+                            onChange={(v) => setCell(r.id, "end1", v)}
+                             options={TIME_END_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.end1 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
@@ -934,41 +1085,51 @@ export default function OM_LoadAssignment() {
                           editable={e.room1}
                           value={r.room1}
                           onChange={(v) => setCell(r.id, "room1", v)}
-                          className="w-[92px]"
+                          className="w-[96px]"
                           align="center"
                         />
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.day2}
-                          value={r.day2}
-                          onChange={(v) => setCell(r.id, "day2", v)}
-                          className="w-[56px]"
-                          align="center"
-                        />
+                        {e.day2 ? (
+                          <SelectBox
+                            value={r.day2}
+                            onChange={(v) => setCell(r.id, "day2", v)}
+                            options={DAY_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.day2 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.begin2}
-                          value={r.begin2}
-                          onChange={(v) => setCell(r.id, "begin2", v)}
-                          className="w-[74px]"
-                          align="center"
-                          placeholder={isRunning ? "" : ""}
-                        />
+                        {e.begin2 ? (
+                          <SelectBox
+                            value={r.begin2}
+                            onChange={(v) => setCell(r.id, "begin2", v)}
+                            options={TIME_BEGIN_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.begin2 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
-                        <Cell
-                          editable={e.end2}
-                          value={r.end2}
-                          onChange={(v) => setCell(r.id, "end2", v)}
-                          className="w-[74px]"
-                          align="center"
-                          placeholder={isRunning ? "" : ""}
-                        />
+                        {e.end2 ? (
+                          <SelectBox
+                            value={r.end2}
+                            onChange={(v) => setCell(r.id, "end2", v)}
+                             options={TIME_END_OPTIONS}
+                            className="w-[70px] text-center"
+
+                          />
+                        ) : (
+                          <span>{r.end2 || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-center">
@@ -976,7 +1137,7 @@ export default function OM_LoadAssignment() {
                           editable={e.room2}
                           value={r.room2}
                           onChange={(v) => setCell(r.id, "room2", v)}
-                          className="w-[92px]"
+                          className="w-[96px]"
                           align="center"
                         />
                       </td>
@@ -1004,7 +1165,9 @@ export default function OM_LoadAssignment() {
                               onClick={() => setReqChange({ open: true, from: r.faculty || "Faculty" })}
                             >
                               <MessageSquareText className="h-5 w-5" />
-                              {unread && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-600" />}
+                              {unread && (
+                                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-600" />
+                              )}
                             </button>
 
                             <button
@@ -1018,7 +1181,9 @@ export default function OM_LoadAssignment() {
                               <button
                                 className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
                                 title="Remove this line"
-                                onClick={() => setRows((prev) => prev.filter((row) => row.id !== r.id))}
+                                onClick={() =>
+                                  setRows((prev) => prev.filter((row) => row.id !== r.id))
+                                }
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
