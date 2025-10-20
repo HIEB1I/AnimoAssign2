@@ -20,7 +20,7 @@ const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" "
 
 /* ---------- Chair Workflow: highlight Department Chair (green) ---------- */
 const WorkflowChips = () => {
-  const steps = ["APO", "Office Manager", "Department Chair", "Dean", "Provost"];
+  const steps = ["APO", "Office Manager", "Department Chair"];
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
       {steps.map((step, i) => (
