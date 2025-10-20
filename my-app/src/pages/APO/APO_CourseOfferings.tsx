@@ -31,13 +31,15 @@ const norm = (s: string, { upper = true } = {}) =>
     [upper ? "toUpperCase" : "toLowerCase"]();
 
 /* ----------------------- Types ----------------------- */
-// Section tuple (13 fields kept for compatibility):
+// Section tuple (14 fields now, added Remarks):
 // [0] Title, [1] Units, [2] Section, [3] Faculty,
 // [4] Day1, [5] Begin1, [6] End1, [7] Room1,
-// [8] Day2, [9] Begin2, [10] End2, [11] Room2, [12] Capacity
+// [8] Day2, [9] Begin2, [10] End2, [11] Room2,
+// [12] Capacity, [13] Remarks
 type SectionRow = [
   string, string, string, string, string, string, string,
-  string, string, string, string, string, string
+  string, string, string, string, string, string,
+  string // index 13 → Remarks
 ];
 
 type Course = {
@@ -206,12 +208,13 @@ function IDCard({
     setOpenPrograms((prev) => ({ ...prev, [program]: !prev[program] }));
 
   // --- Row edit helpers ---
-  type SectionEditable = { section: string; room1: string; room2: string; capacity: string };
+  type SectionEditable = { section: string; room1: string; room2: string; capacity: string; remarks: string };
   const toEditable = (row: SectionRow): SectionEditable => ({
     section: row[2] || "",
     room1: row[7] || "",
     room2: row[11] || "",
     capacity: row[12] || "",
+    remarks: row[13] || "",
   });
   const fromEditable = (row: SectionRow, e: SectionEditable): SectionRow => {
     const copy = [...row] as SectionRow;
@@ -219,6 +222,7 @@ function IDCard({
     copy[7] = e.room1;
     copy[11] = e.room2;
     copy[12] = e.capacity;
+    copy[13] = e.remarks; // <-- persist remarks
     return copy;
   };
 
@@ -303,6 +307,7 @@ function IDCard({
           "", "", "", "", // 4..7
           "", "", "", "", // 8..11
           addDraft.capacity || "40", // 12
+          "", // 13 → Remarks
         ] as SectionRow,
       ],
     };
@@ -335,295 +340,227 @@ function IDCard({
               {isOpen && (
                 <>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse table-fixed">
-                      <colgroup>
-                        <col className="w-[150px]" />
-                        <col className="w-[240px]" />
-                        <col className="w-[90px]" />
-                        <col className="w-[160px]" />
-                        <col className="w-[100px]" />
-                        <col className="w-[90px]" />
-                        <col className="w-[90px]" />
-                        <col className="w-[100px]" />
-                        <col className="w-[100px]" />
-                        <col className="w-[90px]" />
-                        <col className="w-[90px]" />
-                        <col className="w-[100px]" />
-                        <col className="w-[80px]" />
-                        <col className="w-[100px]" />
-                      </colgroup>
+                 <table className="w-full text-sm border-collapse table-fixed">
+  <colgroup>
+    <col className="w-[150px]" />
+    <col className="w-[240px]" />
+    <col className="w-[90px]" />
+    <col className="w-[160px]" />
+    <col className="w-[100px]" />
+    <col className="w-[90px]" />
+    <col className="w-[90px]" />
+    <col className="w-[100px]" />
+    <col className="w-[100px]" />
+    <col className="w-[90px]" />
+    <col className="w-[90px]" />
+    <col className="w-[100px]" />
+    <col className="w-[80px]" />
+    <col className="w-[160px]" /> {/* Remarks column */}
+    <col className="w-[100px]" /> {/* Actions */}
+  </colgroup>
 
-                      <thead className="bg-gray-50 text-emerald-800">
-                        <tr className="text-[13px] font-semibold border-b border-gray-300">
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Program Code</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Course Code &amp; Title</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Section</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Faculty</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Day 1</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Begin 1</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">End 1</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Room 1</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Day 2</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Begin 2</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">End 2</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Room 2</th>
-                          <th className="px-3 py-2 text-left border-r border-gray-300">Capacity</th>
-                          <th className="px-3 py-2 text-center">Actions</th>
-                        </tr>
-                      </thead>
+  <thead className="bg-gray-50 text-emerald-800">
+    <tr className="text-[13px] font-semibold border-b border-gray-300">
+      <th className="px-3 py-2 text-left border-r border-gray-300">Program Code</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Course Code &amp; Title</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Section</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Faculty</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Day 1</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Begin 1</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">End 1</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Room 1</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Day 2</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Begin 2</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">End 2</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Room 2</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Capacity</th>
+      <th className="px-3 py-2 text-left border-r border-gray-300">Remarks</th>
+      <th className="px-3 py-2 text-center">Actions</th>
+    </tr>
+  </thead>
 
-                      <tbody>
-                        {progCourses.flatMap((course) =>
-                          course.sections.map((s, i) => {
-                          const isEditing =
-                            !!editingRow &&
-                            editingRow.course === course &&
-                            editingRow.index === i;
-                            if (isEditing) {
-                              return (
-                                <tr key={`${family}-${course.code}-${(course.programCodes || ['_']).join('+')}-${i}-edit`} className="border-t bg-neutral-50"> 
-                                  <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
-                                  <td className="px-4 py-3 border-r">
-                                    <div className="font-semibold text-emerald-700">{course.code}</div>
-                                    <div className="text-xs text-gray-500">{course.title}</div>
-                                  </td>
+  <tbody>
+    {progCourses.flatMap((course) =>
+      course.sections.map((s, i) => {
+        const isEditing =
+          !!editingRow &&
+          editingRow.course === course &&
+          editingRow.index === i;
 
-                                  <td className="px-3 py-2 border-r">
-                                    <input
-                                      value={editingRow.draft.section}
-                                      onChange={(e) =>
-                                        setEditingRow((p) =>
-                                          p ? { ...p, draft: { ...p.draft, section: e.target.value } } : p
-                                        )
-                                      }
-                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                    />
-                                  </td>
+        if (isEditing) {
+          return (
+            <tr
+              key={`${family}-${course.code}-${i}`} 
+              className="border-t bg-neutral-50"
+            >
+              <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
+              <td className="px-4 py-3 border-r">
+                <div className="font-semibold text-emerald-700">{course.code}</div>
+                <div className="text-xs text-gray-500">{course.title}</div>
+              </td>
 
-                                  <td className="px-3 py-2 border-r">
-                                    <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
-                                      {s[3] || "—"}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
-                                  <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
-                                  <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
+              <td className="px-3 py-2 border-r">
+                <input
+                  value={editingRow.draft.section}
+                  onChange={(e) =>
+                    setEditingRow((p) =>
+                      p ? { ...p, draft: { ...p.draft, section: e.target.value } } : p
+                    )
+                  }
+                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                />
+              </td>
 
-                                  <td className="px-3 py-2 border-r">
-                                    <input
-                                      value={editingRow.draft.room1}
-                                      onChange={(e) =>
-                                        setEditingRow((p) =>
-                                          p ? { ...p, draft: { ...p.draft, room1: e.target.value } } : p
-                                        )
-                                      }
-                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                    />
-                                  </td>
+              <td className="px-3 py-2 border-r">
+                <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
+                  {s[3] || "—"}
+                </span>
+              </td>
+              <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
+              <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
+              <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
 
-                                  <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
-                                  <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
-                                  <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
+              <td className="px-3 py-2 border-r">
+                <input
+                  value={editingRow.draft.room1}
+                  onChange={(e) =>
+                    setEditingRow((p) =>
+                      p ? { ...p, draft: { ...p.draft, room1: e.target.value } } : p
+                    )
+                  }
+                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                />
+              </td>
 
-                                  <td className="px-3 py-2 border-r">
-                                    <input
-                                      value={editingRow.draft.room2}
-                                      onChange={(e) =>
-                                        setEditingRow((p) =>
-                                          p ? { ...p, draft: { ...p.draft, room2: e.target.value } } : p
-                                        )
-                                      }
-                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                    />
-                                  </td>
+              <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
+              <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
+              <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
 
-                                  <td className="px-3 py-2 border-r">
-                                    <input
-                                      value={editingRow.draft.capacity}
-                                      onChange={(e) =>
-                                        setEditingRow((p) =>
-                                          p ? { ...p, draft: { ...p.draft, capacity: e.target.value } } : p
-                                        )
-                                      }
-                                      className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                      focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                                    />
-                                  </td>
+              <td className="px-3 py-2 border-r">
+                <input
+                  value={editingRow.draft.room2}
+                  onChange={(e) =>
+                    setEditingRow((p) =>
+                      p ? { ...p, draft: { ...p.draft, room2: e.target.value } } : p
+                    )
+                  }
+                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                />
+              </td>
 
-                                  <td className="px-3 py-2 text-center">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <button
-                                        onClick={saveEditRow}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
-                                        title="Save"
-                                      >
-                                        <Check className="h-4 w-4" strokeWidth={2.5} />
-                                      </button>
-                                      <button
-                                        onClick={cancelEditRow}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
-                                        title="Cancel"
-                                      >
-                                        <X className="h-4 w-4" strokeWidth={2.5} />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            }
+              <td className="px-3 py-2 border-r">
+                <input
+                  value={editingRow.draft.capacity}
+                  onChange={(e) =>
+                    setEditingRow((p) =>
+                      p ? { ...p, draft: { ...p.draft, capacity: e.target.value } } : p
+                    )
+                  }
+                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                />
+              </td>
 
-                            // View row
-                            return (
-                              <tr key={`${family}-${course.code}-${(course.programCodes || ['_']).join('+')}-${i}`} className="border-t hover:bg-neutral-50">
-                                <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
-                                <td className="px-4 py-3 border-r font-semibold text-emerald-700">
-                                  {course.code}
-                                  <div className="text-xs text-gray-500">{course.title}</div>
-                                </td>
-                                <td className="px-3 py-2 border-r">{s[2] || "—"}</td>
-                                <td className="px-3 py-2 border-r">
-                                  <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
-                                    {s[3] || "—"}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
-                                <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
-                                <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
-                                <td className="px-3 py-2 border-r">{s[7] || "—"}</td>
-                                <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
-                                <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
-                                <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
-                                <td className="px-3 py-2 border-r">{s[11] || "—"}</td>
-                                <td className="px-3 py-2 border-r">{s[12] || "—"}</td>
-                                <td className="px-3 py-2 text-center">
-                                  <div className="flex justify-center gap-3">
-                                    <button
-                                      disabled={globalBusy}
-                                      className="text-emerald-700 hover:text-emerald-900 disabled:opacity-50"
-                                      title="Edit"
-                                      onClick={() => !globalBusy && startEditRow(course, i)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      disabled={globalBusy}
-                                      className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                                      title="Remove"
-                                      onClick={() => !globalBusy && requestDeleteRow(course, i)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      disabled={globalBusy}
-                                      className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                                      title="Remarks"
-                                    >
-                                      <MessageSquareText className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
+              <td className="px-3 py-2 border-r">
+                <input
+                  value={editingRow.draft.remarks}
+                  onChange={(e) =>
+                    setEditingRow((p) =>
+                      p ? { ...p, draft: { ...p.draft, remarks: e.target.value } } : p
+                    )
+                  }
+                  placeholder="Add remarks..."
+                  className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
+                    focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
+                />
+              </td>
 
-                        {/* Inline Add Row */}
-                        {isAddingHere && (
-                          <tr className="border-t bg-white">
-                            {/* Program Code - SelectBox look */}
-                            <td className="px-3 py-2 border-r">
-                              <div className="relative z-50">
-                                <SelectBox
-                                  value={addDraft.programCode || "Select…"}
-                                  onChange={(v) => setAddDraft((d) => ({ ...d, programCode: v === "Select…" ? "" : v }))}
-                                  options={["Select…", ...codes]}
-                                  disabled={globalBusy}
-                                />
-                              </div>
-                            </td>
-                            {/* Course Code & Title (with datalist) */}
-                            <td className="px-3 py-2 border-r">
-                            <div className="grid gap-2">
-                              <SelectBox
-                                value={addDraft.code || "Select Course"}
-                                onChange={(v) => {
-                                  const code = v === "Select Course" ? "" : v;
-                                  const autoTitle = courseCatalog[code] || "";
-                                  setAddDraft((d) => ({ ...d, code, title: autoTitle || d.title }));
-                                }}
-                                options={["Select Course", ...Object.keys(courseCatalog).sort()]}
-                                disabled={globalBusy}
-                              />
+              <td className="px-3 py-2 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={saveEditRow}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50"
+                    title="Save"
+                  >
+                    <Check className="h-4 w-4" strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={cancelEditRow}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
+                    title="Cancel"
+                  >
+                    <X className="h-4 w-4" strokeWidth={2.5} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        }
 
-                              <input
-                                value={addDraft.title}
-                                onChange={(e) => setAddDraft((d) => ({ ...d, title: e.target.value }))}
-                                placeholder="Course Title"
-                                className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-                              />
-                              </div>
-                            </td>
+        // View row
+        return (
+          <tr
+            key={`${family}-${course.code}-${i}`} // same key as the edit row
+            className="border-t hover:bg-neutral-50"
+          >
+            <td className="px-3 py-2 border-r">{course.programCodes?.join(", ") || "—"}</td>
+            <td className="px-4 py-3 border-r font-semibold text-emerald-700">
+              {course.code}
+              <div className="text-xs text-gray-500">{course.title}</div>
+            </td>
+            <td className="px-3 py-2 border-r">{s[2] || "—"}</td>
+            <td className="px-3 py-2 border-r">
+              <span className={s[3] === "Unassigned" ? "text-red-600 font-medium" : ""}>
+                {s[3] || "—"}
+              </span>
+            </td>
+            <td className="px-3 py-2 border-r">{s[4] || "—"}</td>
+            <td className="px-3 py-2 border-r">{fmtTime(s[5])}</td>
+            <td className="px-3 py-2 border-r">{fmtTime(s[6])}</td>
+            <td className="px-3 py-2 border-r">{s[7] || "—"}</td>
+            <td className="px-3 py-2 border-r">{s[8] || "—"}</td>
+            <td className="px-3 py-2 border-r">{fmtTime(s[9])}</td>
+            <td className="px-3 py-2 border-r">{fmtTime(s[10])}</td>
+            <td className="px-3 py-2 border-r">{s[11] || "—"}</td>
+            <td className="px-3 py-2 border-r">{s[12] || "—"}</td>
 
-                            {/* Section (auto) */}
-                            <td className="px-3 py-2 border-r">
-                              {nextSectionCode(progCourses, addDraft.code, addDraft.programCode) || "S—"}
-                            </td>
+            {/* Remarks: view-only unless editing */}
+            <td className="px-3 py-2 border-r">
+              <span className="block text-sm text-gray-700">
+                {s[13] || "—"}
+              </span>
+            </td>
 
-                            {/* Defaults */}
-                            <td className="px-3 py-2 border-r">
-                              <span className="text-red-600 font-medium">Unassigned</span>
-                            </td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
-                            <td className="px-3 py-2 border-r">—</td>
+            <td className="px-3 py-2 text-center">
+              <div className="flex justify-center gap-3">
+                <button
+                  disabled={globalBusy}
+                  className="text-emerald-700 hover:text-emerald-900 disabled:opacity-50"
+                  title="Edit"
+                  onClick={() => !globalBusy && startEditRow(course, i)}
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  disabled={globalBusy}
+                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                  title="Remove"
+                  onClick={() => !globalBusy && requestDeleteRow(course, i)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        );
+      })
+    )}
+  </tbody>
+</table>
 
-                            {/* Capacity */}
-                            <td className="px-3 py-2 border-r">
-                              <input
-                                value={addDraft.capacity}
-                                onChange={(e) => setAddDraft((d) => ({ ...d, capacity: e.target.value }))}
-                                className="w-full rounded-md border border-neutral-300 px-2 py-1 text-sm shadow-sm
-                                  focus:ring-1 focus:ring-neutral-400/30 focus:border-neutral-500 outline-none"
-
-                              />
-                            </td>
-
-                            {/* Actions */}
-                            <td className="px-3 py-2 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-600 text-green-600 hover:bg-green-50 disabled:opacity-50"
-                                  onClick={() => handleSaveAdd(family, progCourses)}
-                                  disabled={globalBusy}
-                                  title="Save"
-                                >
-                                  <Check className="h-4 w-4" strokeWidth={2.5} />
-                                </button>
-                                <button
-                                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50"
-                                  onClick={() => {
-                                    setActiveProgramForAdd(null);
-                                    setAddDraft({ programCode: "", code: "", title: "", capacity: "40" });
-                                  }}
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4" strokeWidth={2.5} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
                   </div>
 
                   {/* Add Course button row */}
@@ -789,7 +726,6 @@ const WorkflowChips = () => {
     "APO",
     "Office Manager",
     "APO",
-    "Office Assistant",
     "Department Chair"
   ];
 
@@ -914,6 +850,7 @@ export default function CourseOfferingsScreen() {
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
@@ -925,7 +862,9 @@ export default function CourseOfferingsScreen() {
         return;
       }
 
-      const headerRow = rows[0].map((h, idx) => (idx === 0 ? h.replace(/^\uFEFF/, "").toLowerCase() : h.toLowerCase()));
+      const headerRow = rows[0].map((h, idx) =>
+        idx === 0 ? h.replace(/^\uFEFF/, "").toLowerCase() : h.toLowerCase()
+      );
       const dataRows = rows.slice(1);
       const idxOf = (key: string) => headerRow.indexOf(key.toLowerCase());
       const get = (cols: string[], key: string) => {
@@ -937,7 +876,6 @@ export default function CourseOfferingsScreen() {
       const sectionCounter: Record<string, number> = {};
 
       for (const cols of dataRows) {
-        // raw
         const rawId = get(cols, "id");
         const rawProgram = get(cols, "program");
         const rawProgCode = get(cols, "program code");
@@ -947,7 +885,6 @@ export default function CourseOfferingsScreen() {
         const rawFaculty = get(cols, "faculty");
         const rawCap = get(cols, "capacity");
 
-        // normalized (keys upper, title lower to keep accents/search friendly)
         const id = norm(rawId);
         const program = norm(rawProgram);
         const programCode = norm(rawProgCode);
@@ -958,37 +895,50 @@ export default function CourseOfferingsScreen() {
 
         if (!id || !programCode || !code || !title) continue;
 
-        // section counter per *unique group*
-        const counterKey = `${id}|${program}|${programCode}|${code}`;
-        if (!sectionCounter[counterKey]) sectionCounter[counterKey] = 11;
-        const sectionCode = `S${sectionCounter[counterKey]++}`;
+        // 🔹 The unique key should not include the ID — use only program + programCode + code.
+        const uniqueKey = `${program}|${programCode}|${code}`;
 
-        // unify by unique group
-        const uniqueKey = counterKey;
+        // 🔹 Initialize section counter per unique course
+        if (!sectionCounter[uniqueKey]) sectionCounter[uniqueKey] = 11;
+        const sectionCode = `S${sectionCounter[uniqueKey]++}`;
+
+        // 🔹 Merge same course (avoid duplicates)
         if (!courseMap[uniqueKey]) {
           courseMap[uniqueKey] = {
-            code,                          // normalized upper for keying
-            title: rawTitle.trim(),        // keep original casing for display
+            code,
+            title: rawTitle.trim(),
             level: "Undergraduate",
             department:
-              (rawDept as Course["department"]) || "Department of Software Technology",
+              (rawDept as Course["department"]) ||
+              "Department of Software Technology",
             ids: [id],
             programs: [program],
             programCodes: [programCode],
             sections: [],
           };
+        } else {
+          // Merge ID if new
+          if (!courseMap[uniqueKey].ids.includes(id))
+            courseMap[uniqueKey].ids.push(id);
         }
 
-        const newSection: SectionRow = [
-          courseMap[uniqueKey].title,
-          "3",
-          sectionCode,
-          faculty,
-          "", "", "", "",
-          "", "", "", "",
-          cap,
-        ];
-        courseMap[uniqueKey].sections.push(newSection);
+        // 🔹 Add section only if not already existing
+        const existing = courseMap[uniqueKey].sections.find(
+          (s) => s[2] === sectionCode && s[3] === faculty
+        );
+        if (!existing) {
+          const newSection: SectionRow = [
+            courseMap[uniqueKey].title,
+            "3",
+            sectionCode,
+            faculty,
+            "", "", "", "",
+            "", "", "", "",
+            cap,
+            "", // Remarks
+          ];
+          courseMap[uniqueKey].sections.push(newSection);
+        }
       }
 
       const loaded = Object.values(courseMap);

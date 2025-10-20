@@ -83,9 +83,9 @@ export default function App() {
         <Route path="/student/screen" element={<STUDENT_Screen />} />
 
         {/* -------- APO -------- */}
-        <Route path="/apo/pre-enlistment" element={<APO_PreEnlistment />} />
-        <Route path="/apo/course-offerings" element={<APO_CourseOfferings />} />
-        <Route path="/apo/room-allocation" element={<APO_RoomAllocation />} />
+        <Route path="/apo/preenlistment" element={<APO_PreEnlistment />} />
+        <Route path="/apo/courseofferings" element={<APO_CourseOfferings />} />
+        <Route path="/apo/roomallocation" element={<APO_RoomAllocation />} />
         <Route path="/apo/inbox" element={<APO_Inbox />} />
 
 ````````{/* -------- Office Manager -------- */}

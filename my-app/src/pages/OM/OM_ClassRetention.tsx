@@ -81,30 +81,6 @@ function SelectBox({
   );
 }
 
-/* ---------------- Workflow Chips ---------------- */
-const WorkflowChips = () => {
-  const steps = ["APO", "Office Manager", "Department Chair"];
-  return (
-    <div className="flex flex-wrap items-center gap-2 mt-3">
-      {steps.map((step, i) => (
-        <React.Fragment key={step}>
-          <span
-            className={cls(
-              "rounded-full px-3 py-1 text-[13px] font-medium border",
-              step === "Office Manager"
-                ? "border-emerald-700 bg-emerald-700 text-white"
-                : "border-gray-300 bg-white text-gray-800"
-            )}
-          >
-            {step}
-          </span>
-          {i < steps.length - 1 && <span className="text-gray-400">—</span>}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-};
-
 /* ---------------- Main ---------------- */
 export default function OM_ClassRetention() {
   const [status, setStatus] = useState("All Status");
@@ -170,7 +146,6 @@ export default function OM_ClassRetention() {
           <p className="text-sm text-gray-600">
             Manage class retention requests for low-enrollment courses for Term 1 AY 2025–2026
           </p>
-          <WorkflowChips />
         </header>
 
         {/* Filter Row */}

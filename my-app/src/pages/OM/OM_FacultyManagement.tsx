@@ -180,7 +180,7 @@ export default function OM_FacultyManagement() {
       email: "rafael.cabredo@dlsu.edu.ph",
       department: "Software Technology",
       position: "Associate Professor",
-      teachingUnits: "15 units",
+      teachingUnits: "12 units",
       facultyType: "Full-Time",
       status: "Active",
     },
@@ -189,7 +189,7 @@ export default function OM_FacultyManagement() {
       email: "diosdado.nicdao@dlsu.edu.ph",
       department: "Computer Technology",
       position: "Professor",
-      teachingUnits: "12 units",
+      teachingUnits: "N/A",
       facultyType: "Part-Time",
       status: "Inactive",
     },
@@ -198,7 +198,7 @@ export default function OM_FacultyManagement() {
       email: "raphael.gonda@dlsu.edu.ph",
       department: "Information Technology",
       position: "Assistant Professor",
-      teachingUnits: "18 units",
+      teachingUnits: "12 units",
       facultyType: "Full-Time",
       status: "On Leave",
     },
@@ -350,59 +350,48 @@ export default function OM_FacultyManagement() {
                     Faculty Schedule
                   </h2>
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="space-y-6">
                     {[
+                      // Online days
                       {
                         day: "Monday",
                         entries: [
-                          {
-                            code: "CSMODEL",
-                            section: "S12",
-                            campus: "Manila",
-                            room: "Online",
-                            time: "7:30–9:00",
-                          },
-                          {
-                            code: "CSMODEL",
-                            section: "S13",
-                            campus: "Manila",
-                            room: "Online",
-                            time: "9:15–10:45",
-                          },
+                          { code: "CSMODEL", section: "S12", campus: "Manila", room: "Online", time: "7:30–9:00" },
+                          { code: "CSMODEL", section: "S13", campus: "Manila", room: "Online", time: "9:15–10:45" },
                         ],
                       },
                       {
+                        day: "Tuesday", // added
+                        entries: [
+                          { code: "CCPROG3", section: "S15", campus: "Manila", room: "Online", time: "7:30–9:00" },
+                          { code: "CCPROG3", section: "S16", campus: "Manila", room: "Online", time: "9:15–10:45" },
+                        ],
+                      },
+
+                      // On-campus days
+                      {
                         day: "Thursday",
                         entries: [
-                          {
-                            code: "CSMODEL",
-                            section: "S12",
-                            campus: "Manila",
-                            room: "GK210",
-                            time: "7:30–9:00",
-                          },
-                          {
-                            code: "CSMODEL",
-                            section: "S13",
-                            campus: "Manila",
-                            room: "GK211",
-                            time: "9:15–10:45",
-                          },
+                          { code: "CSMODEL", section: "S12", campus: "Manila", room: "GK210", time: "7:30–9:00" },
+                          { code: "CSMODEL", section: "S13", campus: "Manila", room: "GK211", time: "9:15–10:45" },
+                        ],
+                      },
+                      {
+                        day: "Friday", // added
+                        entries: [
+                          { code: "CCPROG3", section: "S15", campus: "Manila", room: "GK306A", time: "7:30–9:00" },
+                          { code: "CCPROG3", section: "S16", campus: "Manila", room: "GK306B", time: "9:15–10:45" },
                         ],
                       },
                     ]
-                      // Sort days chronologically (Mon → Sat)
+                      // Keep chronological order Mon → Sat
                       .sort(
                         (a, b) =>
                           ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(a.day) -
                           ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(b.day)
                       )
                       .map(({ day, entries }) => (
-                        <div
-                          key={day}
-                          className="rounded-xl border border-gray-200 mb-6 overflow-hidden"
-                        >
-                          {/* 🟩 Header styled like “Term 1” */}
+                        <div key={day} className="rounded-xl border border-gray-200 overflow-hidden">
                           <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">
                             {day}
                           </div>
@@ -412,10 +401,7 @@ export default function OM_FacultyManagement() {
                               <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide border-b">
                                 <tr>
                                   {["Course Code", "Section", "Campus", "Room", "Time"].map((h) => (
-                                    <th
-                                      key={h}
-                                      className="px-3 py-2 text-center font-medium whitespace-nowrap"
-                                    >
+                                    <th key={h} className="px-3 py-2 text-center font-medium whitespace-nowrap">
                                       {h}
                                     </th>
                                   ))}
@@ -425,10 +411,7 @@ export default function OM_FacultyManagement() {
                                 {entries.map((row, i) => (
                                   <tr
                                     key={`${day}-${row.section}-${i}`}
-                                    className={cls(
-                                      i % 2 === 0 ? "bg-white" : "bg-gray-50",
-                                      "text-gray-800"
-                                    )}
+                                    className={cls(i % 2 === 0 ? "bg-white" : "bg-gray-50", "text-gray-800")}
                                   >
                                     <td className="px-3 py-2 text-center">{row.code}</td>
                                     <td className="px-3 py-2 text-center">{row.section}</td>
@@ -453,7 +436,6 @@ export default function OM_FacultyManagement() {
                 </h2>
 
                 {/* Teaching History Viewer */}
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
                   {/* Academic Year Header with Navigation */}
                   <div className="flex justify-between items-center mb-4">
                     <button
@@ -571,7 +553,6 @@ export default function OM_FacultyManagement() {
                       </div>
                     </div>
                   ))}
-                </div>
               </>
             )}
               <div className="flex justify-end mt-8">
