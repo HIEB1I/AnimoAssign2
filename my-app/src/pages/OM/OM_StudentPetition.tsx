@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { cls } from "../../utilities/cls";
 import AppShell from "../../base/AppShell";
 import {
-  CheckCheck,
+  Send,
   Check,
   ChevronDown,
   Search,
@@ -222,7 +222,7 @@ export default function OM_StudentPetition() {
           <button
             onClick={() => {
               if (selectedRows.length === 0) {
-                alert("Please select at least one petition to approve.");
+                alert("Please select at least one petition to forward.");
                 return;
               }
               setShowApprovePrompt(true);
@@ -235,8 +235,8 @@ export default function OM_StudentPetition() {
                 : "bg-gray-300 cursor-not-allowed"
             )}
           >
-            <CheckCheck className="h-4 w-4" />
-            Approve
+            <Send className="h-4 w-4" />
+            Forward
           </button>
         </div>
 
@@ -375,16 +375,14 @@ export default function OM_StudentPetition() {
                 <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
               <h3 className="mb-2 text-center text-2xl font-semibold">
-                Approve Selected Petitions?
+                Forward Selected Petitions to the Department Chair?
               </h3>
               <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
-                You are about to approve{" "}
+                You are about to forward{" "}
                 <span className="font-semibold">{selectedRows.length}</span>{" "}
-                {selectedRows.length === 1 ? "petition" : "petitions"}.
-                <br />
-                Once confirmed, these will be reflected on the{" "}
-                <span className="font-semibold">Student</span> Portal.
+                {selectedRows.length === 1 ? "petition" : "petitions"} to the Department Chair for review.
               </p>
+
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowApprovePrompt(false)}
@@ -396,13 +394,13 @@ export default function OM_StudentPetition() {
                   onClick={() => {
                     setShowApprovePrompt(false);
                     alert(
-                      `✅ ${selectedRows.length} petition(s) approved successfully!`
+                      `✅ ${selectedRows.length} petition(s) forwarded to the Department Chair.`
                     );
                     setSelectedRows([]);
                   }}
                   className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                 >
-                  Yes, I Approve
+                  Forward
                 </button>
               </div>
             </div>

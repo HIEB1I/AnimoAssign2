@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { cls } from "../../utilities/cls";
 import AppShell from "../../base/AppShell";
 import {
-  CheckCheck,
+  Send,
   Check,
   ChevronDown,
   Search,
@@ -188,8 +188,8 @@ export default function OM_ClassRetention() {
                 : "bg-gray-300 cursor-not-allowed"
             )}
           >
-            <CheckCheck className="h-4 w-4" />
-            Approve
+            <Send className="h-4 w-4" />
+            Forward
           </button>
         </div>
 
@@ -278,16 +278,16 @@ export default function OM_ClassRetention() {
                 <Check className="h-8 w-8" strokeWidth={2.5} />
               </div>
               <h3 className="mb-2 text-center text-2xl font-semibold">
-                Approve Selected Courses?
+                Forward Selected Courses?
               </h3>
               <p className="mx-auto mb-6 max-w-md text-center text-sm text-neutral-600">
-                You are about to approve{" "}
+                You are about to forward{" "}
                 <span className="font-semibold">{selectedRows.length}</span>{" "}
                 {selectedRows.length === 1
                   ? "class retention request"
                   : "class retention requests"}
                 .<br />
-                Once confirmed, these will be forwarded to the{" "}
+                Once confirmed, these will be sent to the{" "}
                 <span className="font-semibold">Department Chair</span>.
               </p>
               <div className="flex justify-end gap-2">
@@ -305,7 +305,7 @@ export default function OM_ClassRetention() {
                   }}
                   className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                 >
-                  Yes, I Approve
+                  Forward
                 </button>
               </div>
             </div>
