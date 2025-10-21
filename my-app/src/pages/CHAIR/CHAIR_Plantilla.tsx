@@ -104,7 +104,7 @@ function DepartmentPlantilla({
     doc.setFontSize(14);
     doc.text(`Department Faculty Plantilla of CCS – ${dept}`, 14, 14);
     doc.setFontSize(10);
-    doc.text(`Academic Year 2025–2026 • 1st Term • Full-time Faculty`, 14, 22);
+    doc.text(`Academic Year 2025–2026 • 1st Term`, 14, 22);
     doc.text(`File: ${file}`, 14, 28);
     doc.text(`Generated: ${generated}`, doc.internal.pageSize.getWidth() - 14, 28, { align: "right" });
 
@@ -256,7 +256,6 @@ function DepartmentPlantilla({
         <h2 className="text-xl font-semibold">
           Department Faculty Plantilla of CCS – {deptLabel} for Academic Year 2025–2026, 1st Term
         </h2>
-        <p className="text-sm text-gray-600">Full-time Faculty</p>
       </header>
 
       <div className="flex items-center justify-end gap-3 mt-4">
