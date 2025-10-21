@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import AppShell from "../../base/AppShell";
-import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked, Search, ChevronDown, MoreVertical, FileText as FileTextIcon, BookOpen as BookOpenIcon } from "lucide-react";
+import {
+  ListChecks,
+  Users,
+  BookOpen,
+  BarChart3,
+  FileText,
+  FilePlus,
+  BookMarked,
+  Search,
+  ChevronDown,
+  MoreVertical,
+  FileText as FileTextIcon,
+} from "lucide-react";
 
 /* ---------- tiny util ---------- */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
@@ -16,7 +28,7 @@ const chairItems = [
   { to: "/chair/class-retention", label: "Class Retention", Icon: BookMarked },
 ];
 
-/* ---------------- SelectBox (mirrors OM) ---------------- */
+/* ---------------- SelectBox ---------------- */
 function SelectBox({
   value, onChange, options, placeholder = "— Select —", className = "",
 }: {
@@ -63,8 +75,8 @@ function SelectBox({
   );
 }
 
-/* ---------------- Action Menu (mirrors OM) ---------------- */
-function ActionMenu({ onViewSyllabus, onViewDetails }: { onViewSyllabus: () => void; onViewDetails: () => void; }) {
+/* ---------------- Action Menu (Syllabus only) ---------------- */
+function ActionMenu({ onViewSyllabus }: { onViewSyllabus: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -80,11 +92,11 @@ function ActionMenu({ onViewSyllabus, onViewDetails }: { onViewSyllabus: () => v
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white shadow-xl py-1 text-left z-50">
-          <button onClick={() => { setOpen(false); onViewSyllabus(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={() => { setOpen(false); onViewSyllabus(); }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
             <FileTextIcon className="h-4 w-4" /> <span>View Syllabus</span>
-          </button>
-          <button onClick={() => { setOpen(false); onViewDetails(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
-            <BookOpenIcon className="h-4 w-4" /> <span>Course Details</span>
           </button>
         </div>
       )}
@@ -92,7 +104,7 @@ function ActionMenu({ onViewSyllabus, onViewDetails }: { onViewSyllabus: () => v
   );
 }
 
-/* ---------------- Main (content ported from OM_CourseManagement) ---------------- */
+/* ---------------- Main ---------------- */
 export default function CHAIR_CourseManagement() {
   type Course = {
     cluster: string; code: string; title: string; units: number | string; coordinator: string; email: string; composition: string[]; syllabus: string;
@@ -100,12 +112,12 @@ export default function CHAIR_CourseManagement() {
 
   const [cluster, setCluster] = useState("All Clusters");
   const [search, setSearch] = useState("");
-  const [activeModal, setActiveModal] = useState<null | "details" | "syllabus">(null);
+  const [activeModal, setActiveModal] = useState<null | "syllabus">(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   const clusters = ["All Clusters", "Game Arts", "Programming"];
 
-  // Sample data mirrored from OM
+  // Sample data
   const [data] = useState<Course[]>([
     { cluster: "Game Arts", code: "AD-FUND", title: "Game Art Fundamentals", units: "3.0", coordinator: "CABREDO, RAFAEL A.", email: "rafael.cabredo@dlsu.edu.ph", composition: ["SALDIVAR, ROLAND", "GOMEZ, PATRICK", "REYES, LARA"], syllabus: "https://drive.google.com/drive/u/4/folders/1SXZd3XolHYK6Kr-Z6kMLSqpauY8dRlgq" },
     { cluster: "Game Arts", code: "AD-MOVE", title: "Fundamentals of Human Movement", units: "3.0", coordinator: "CABREDO, RAFAEL A.", email: "rafael.cabredo@dlsu.edu.ph", composition: ["ESGUERRA, TERRENCE"], syllabus: "https://drive.google.com/drive/u/4/folders/1SXZd3XolHYK6Kr-Z6kMLSqpauY8dRlgq" },
@@ -120,7 +132,7 @@ export default function CHAIR_CourseManagement() {
         r.coordinator.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const openModal = (type: "details" | "syllabus", course: Course) => { setSelectedCourse(course); setActiveModal(type); };
+  const openSyllabus = (course: Course) => { setSelectedCourse(course); setActiveModal("syllabus"); };
   const closeModal = () => { setActiveModal(null); setSelectedCourse(null); };
 
   return (
@@ -135,7 +147,7 @@ export default function CHAIR_CourseManagement() {
           <p className="text-sm text-gray-600">Manage department course coordinators and teaching compositions.</p>
         </header>
 
-        {/* Filters (same as OM) */}
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm mb-6">
           <div className="relative flex-1 min-w-[220px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
@@ -149,7 +161,7 @@ export default function CHAIR_CourseManagement() {
           <SelectBox value={cluster} onChange={setCluster} options={clusters} />
         </div>
 
-        {/* Table (same as OM) */}
+        {/* Table */}
         <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm overflow-visible">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b text-gray-700">
@@ -159,7 +171,8 @@ export default function CHAIR_CourseManagement() {
                 <th className="text-left px-4 py-2">Units</th>
                 <th className="text-left px-4 py-2">Course Coordinator</th>
                 <th className="text-left px-4 py-2">Teaching Composition</th>
-                <th className="text-left px-4 py-2">Actions</th>
+                {/* CHANGED: center the Actions header */}
+                <th className="text-center align-middle px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -180,11 +193,11 @@ export default function CHAIR_CourseManagement() {
                       <div key={i} className="text-sm text-gray-800">{name}</div>
                     ))}
                   </td>
-                  <td className="text-left">
-                    <ActionMenu
-                      onViewSyllabus={() => openModal("syllabus", r)}
-                      onViewDetails={() => openModal("details", r)}
-                    />
+                  {/* CHANGED: center the Actions cell content */}
+                  <td className="px-4 py-3 text-center align-middle">
+                    <div className="inline-flex items-center justify-center">
+                      <ActionMenu onViewSyllabus={() => openSyllabus(r)} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -192,49 +205,28 @@ export default function CHAIR_CourseManagement() {
           </table>
         </div>
 
-        {/* Modals (same as OM) */}
-        {activeModal && selectedCourse && (
+        {/* Syllabus Modal */}
+        {activeModal === "syllabus" && selectedCourse && (
           <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
             <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-              <h2 className="text-lg font-semibold text-emerald-700 mb-4">
-                {activeModal === "details" ? "Course Details" : "Syllabus"}
-              </h2>
-
-              {activeModal === "details" ? (
-                <div className="grid grid-cols-2 gap-y-3 text-sm text-gray-800">
-                  <div><p className="font-semibold text-gray-900">Course Code</p><p>{selectedCourse.code}</p></div>
-                  <div><p className="font-semibold text-gray-900">Title</p><p>{selectedCourse.title}</p></div>
-                  <div><p className="font-semibold text-gray-900">Units</p><p>{selectedCourse.units}</p></div>
-                  <div><p className="font-semibold text-gray-900">Cluster</p><p>{selectedCourse.cluster}</p></div>
-                  <div><p className="font-semibold text-gray-900">Coordinator</p><p>{selectedCourse.coordinator}</p></div>
-                  <div><p className="font-semibold text-gray-900">Email</p>
-                    <p className="text-blue-700 underline"><a href={`mailto:${selectedCourse.email}`}>{selectedCourse.email}</a></p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold text-gray-900">Teaching Composition</p>
-                    {selectedCourse.composition.map((f, i) => (<p key={i}>{f}</p>))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-700">
-                  {selectedCourse.syllabus ? (
-                    <>
-                      <p className="mb-3">
-                        Syllabus Link:
-                        <a href={selectedCourse.syllabus} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline ml-2">Open in New Tab</a>
-                      </p>
-                      <iframe
-                        src={selectedCourse.syllabus.replace("/view?usp=sharing", "/preview")}
-                        title="Syllabus"
-                        className="w-full h-[500px] border rounded-xl"
-                      />
-                    </>
-                  ) : (
-                    <p className="text-gray-500 italic">No syllabus link provided.</p>
-                  )}
-                </div>
-              )}
-
+              <h2 className="text-lg font-semibold text-emerald-700 mb-4">Syllabus</h2>
+              <div className="text-sm text-gray-700">
+                {selectedCourse.syllabus ? (
+                  <>
+                    <p className="mb-3">
+                      Syllabus Link:
+                      <a href={selectedCourse.syllabus} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline ml-2">Open in New Tab</a>
+                    </p>
+                    <iframe
+                      src={selectedCourse.syllabus.replace("/view?usp=sharing", "/preview")}
+                      title="Syllabus"
+                      className="w-full h-[500px] border rounded-xl"
+                    />
+                  </>
+                ) : (
+                  <p className="text-gray-500 italic">No syllabus link provided.</p>
+                )}
+              </div>
               <div className="flex justify-end mt-6">
                 <button onClick={closeModal} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">Close</button>
               </div>

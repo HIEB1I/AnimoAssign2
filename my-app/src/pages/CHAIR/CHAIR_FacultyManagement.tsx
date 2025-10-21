@@ -1,6 +1,22 @@
+// src/pages/CHAIR/CHAIR_FacultyManagement.tsx
 import React, { useState, useEffect, useRef } from "react";
 import AppShell from "../../base/AppShell";
-import { ListChecks, Users, BookOpen, BarChart3, FileText, FilePlus, BookMarked, Search, ChevronDown, MoreVertical, User as UserIcon, Calendar, BookOpen as BookOpenIcon, MapPin, Users as UsersIcon, GraduationCap } from "lucide-react";
+import {
+  ListChecks,
+  Users,
+  BookOpen,
+  BarChart3,
+  FileText,
+  FilePlus,
+  BookMarked,
+  Search,
+  ChevronDown,
+  MoreVertical,
+  User as UserIcon,
+  Calendar,
+  BookOpen as BookOpenIcon,
+  GraduationCap,
+} from "lucide-react";
 
 /* ---------- tiny util ---------- */
 const cls = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
@@ -18,9 +34,17 @@ const chairItems = [
 
 /* ---------------- SelectBox (mirrors OM) ---------------- */
 function SelectBox({
-  value, onChange, options, placeholder = "— Select —", className = "",
+  value,
+  onChange,
+  options,
+  placeholder = "— Select —",
+  className = "",
 }: {
-  value: string; onChange: (v: string) => void; options: string[]; placeholder?: string; className?: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -47,12 +71,22 @@ function SelectBox({
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2" />
       </button>
       {open && (
-        <div ref={listRef} className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-gray-300 bg-white shadow-xl">
+        <div
+          ref={listRef}
+          className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-gray-300 bg-white shadow-xl"
+        >
           {options.map((opt) => (
             <button
               key={opt}
-              onClick={() => { onChange(opt); setOpen(false); btnRef.current?.focus(); }}
-              className={cls("block w-full px-4 py-2 text-left text-sm hover:bg-emerald-50", value === opt && "bg-emerald-100 text-emerald-800 font-medium")}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+                btnRef.current?.focus();
+              }}
+              className={cls(
+                "block w-full px-4 py-2 text-left text-sm hover:bg-emerald-50",
+                value === opt && "bg-emerald-100 text-emerald-800 font-medium"
+              )}
             >
               {opt}
             </button>
@@ -65,9 +99,13 @@ function SelectBox({
 
 /* ---------------- Action Menu (mirrors OM) ---------------- */
 function ActionMenu({
-  onViewProfile, onViewSchedule, onViewHistory,
+  onViewProfile,
+  onViewSchedule,
+  onViewHistory,
 }: {
-  onViewProfile: () => void; onViewSchedule: () => void; onViewHistory: () => void;
+  onViewProfile: () => void;
+  onViewSchedule: () => void;
+  onViewHistory: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -84,13 +122,31 @@ function ActionMenu({
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white shadow-xl py-1 text-left z-50">
-          <button onClick={() => { setOpen(false); onViewProfile(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={() => {
+              setOpen(false);
+              onViewProfile();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
             <UserIcon className="h-4 w-4" /> <span>Faculty Profile</span>
           </button>
-          <button onClick={() => { setOpen(false); onViewSchedule(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={() => {
+              setOpen(false);
+              onViewSchedule();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
             <Calendar className="h-4 w-4" /> <span>Schedule</span>
           </button>
-          <button onClick={() => { setOpen(false); onViewHistory(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={() => {
+              setOpen(false);
+              onViewHistory();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
             <BookOpenIcon className="h-4 w-4" /> <span>Teaching History</span>
           </button>
         </div>
@@ -99,10 +155,24 @@ function ActionMenu({
   );
 }
 
-/* ---------------- Main (content ported from OM_FacultyManagement) ---------------- */
+/* ---------------- Main (mirrors OM profile & schedule formatting) ---------------- */
 export default function CHAIR_FacultyManagement() {
   type Faculty = {
-    name: string; email: string; department: string; position: string; teachingUnits: string; facultyType: string; status: string;
+    name: string;
+    email: string;
+    department: string;
+    position: string;
+    teachingUnits: string;
+    facultyType: string;
+    status: string;
+
+    // Added to match OM profile details
+    adminPosition: string;
+    courseCoordinator: string;
+    loadTeaching: number;
+    loadAdmin: number;
+    loadResearch: number;
+    loadFacultyUnits: number;
   };
 
   const [department, setDepartment] = useState("All Departments");
@@ -118,10 +188,53 @@ export default function CHAIR_FacultyManagement() {
   const departmentOptions = ["All Departments", "Software Technology", "Computer Technology", "Information Technology"];
   const facultyTypeOptions = ["All Type", "Full-Time", "Part-Time"];
 
+  // Sample data now includes the missing profile fields
   const [data] = useState<Faculty[]>([
-    { name: "CABREDO, RAFAEL ANGISCO", email: "rafael.cabredo@dlsu.edu.ph", department: "Software Technology", position: "Associate Professor", teachingUnits: "15 units", facultyType: "Full-Time", status: "Active" },
-    { name: "NICDAO, DIOSDADO R. III", email: "diosdado.nicdao@dlsu.edu.ph", department: "Computer Technology", position: "Professor", teachingUnits: "12 units", facultyType: "Part-Time", status: "Inactive" },
-    { name: "GONDA, RAPHAEL WILWAYCO", email: "raphael.gonda@dlsu.edu.ph", department: "Information Technology", position: "Assistant Professor", teachingUnits: "18 units", facultyType: "Full-Time", status: "On Leave" },
+    {
+      name: "CABREDO, RAFAEL ANGISCO",
+      email: "rafael.cabredo@dlsu.edu.ph",
+      department: "Software Technology",
+      position: "Associate Professor",
+      teachingUnits: "15 units",
+      facultyType: "Full-Time",
+      status: "Active",
+      adminPosition: "Department Chair",
+      courseCoordinator: "CCPROG3, ADFUND",
+      loadTeaching: 12.0,
+      loadAdmin: 6.0,
+      loadResearch: 0.0,
+      loadFacultyUnits: 18.0,
+    },
+    {
+      name: "NICDAO, DIOSDADO R. III",
+      email: "diosdado.nicdao@dlsu.edu.ph",
+      department: "Computer Technology",
+      position: "Professor",
+      teachingUnits: "12 units",
+      facultyType: "Part-Time",
+      status: "Inactive",
+      adminPosition: "—",
+      courseCoordinator: "—",
+      loadTeaching: 9.0,
+      loadAdmin: 0.0,
+      loadResearch: 0.0,
+      loadFacultyUnits: 9.0,
+    },
+    {
+      name: "GONDA, RAPHAEL WILWAYCO",
+      email: "raphael.gonda@dlsu.edu.ph",
+      department: "Information Technology",
+      position: "Assistant Professor",
+      teachingUnits: "18 units",
+      facultyType: "Full-Time",
+      status: "On Leave",
+      adminPosition: "—",
+      courseCoordinator: "STCLOUD",
+      loadTeaching: 12.0,
+      loadAdmin: 3.0,
+      loadResearch: 3.0,
+      loadFacultyUnits: 18.0,
+    },
   ]);
 
   const filtered = data.filter(
@@ -131,8 +244,50 @@ export default function CHAIR_FacultyManagement() {
       r.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openModal = (type: "profile" | "schedule" | "history", faculty: Faculty) => { setSelectedFaculty(faculty); setActiveModal(type); };
-  const closeModal = () => { setActiveModal(null); setSelectedFaculty(null); };
+  const openModal = (type: "profile" | "schedule" | "history", faculty: Faculty) => {
+    setSelectedFaculty(faculty);
+    setActiveModal(type);
+  };
+  const closeModal = () => {
+    setActiveModal(null);
+    setSelectedFaculty(null);
+  };
+
+  // Day-grouped schedule, same formatting as OM
+  const daySchedules = [
+    {
+      day: "Monday",
+      entries: [
+        { code: "CSMODEL", section: "S12", campus: "Manila", room: "Online", time: "7:30–9:00" },
+        { code: "CSMODEL", section: "S13", campus: "Manila", room: "Online", time: "9:15–10:45" },
+      ],
+    },
+    {
+      day: "Tuesday",
+      entries: [
+        { code: "CCPROG3", section: "S15", campus: "Manila", room: "Online", time: "7:30–9:00" },
+        { code: "CCPROG3", section: "S16", campus: "Manila", room: "Online", time: "9:15–10:45" },
+      ],
+    },
+    {
+      day: "Thursday",
+      entries: [
+        { code: "CSMODEL", section: "S12", campus: "Manila", room: "GK210", time: "7:30–9:00" },
+        { code: "CSMODEL", section: "S13", campus: "Manila", room: "GK211", time: "9:15–10:45" },
+      ],
+    },
+    {
+      day: "Friday",
+      entries: [
+        { code: "CCPROG3", section: "S15", campus: "Manila", room: "GK306A", time: "7:30–9:00" },
+        { code: "CCPROG3", section: "S16", campus: "Manila", room: "GK306B", time: "9:15–10:45" },
+      ],
+    },
+  ].sort(
+    (a, b) =>
+      ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(a.day) -
+      ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(b.day)
+  );
 
   return (
     <AppShell
@@ -200,32 +355,71 @@ export default function CHAIR_FacultyManagement() {
           </table>
         </div>
 
-        {/* Modals (same as OM) */}
+        {/* Modals (profile & schedule mirror OM formatting) */}
         {activeModal && selectedFaculty && (
           <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4">
             <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
               {activeModal === "profile" && (
                 <>
                   <h2 className="text-lg font-semibold text-emerald-700 mb-6">Faculty Profile</h2>
+
+                  {/* Details grid (like OM) */}
                   <div className="grid grid-cols-3 gap-y-5 text-sm mb-8">
-                    <div><p className="font-semibold text-gray-900">Name</p><p className="text-gray-600">{selectedFaculty.name}</p></div>
-                    <div><p className="font-semibold text-gray-900">Email</p><p className="text-gray-600">{selectedFaculty.email}</p></div>
-                    <div><p className="font-semibold text-gray-900">Department</p><p className="text-gray-600">{selectedFaculty.department}</p></div>
-                    <div><p className="font-semibold text-gray-900">Faculty Type</p><p className="text-gray-600">{selectedFaculty.facultyType}</p></div>
-                    <div><p className="font-semibold text-gray-900">Status</p><p className="text-gray-600">{selectedFaculty.status}</p></div>
-                    <div><p className="font-semibold text-gray-900">Position</p><p className="text-gray-600">{selectedFaculty.position}</p></div>
-                    <div><p className="font-semibold text-gray-900">Admin Position</p><p className="text-gray-600">—</p></div>
-                    <div><p className="font-semibold text-gray-900">Course Coordinator</p><p className="text-gray-600">—</p></div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Name</p>
+                      <p className="text-gray-600">{selectedFaculty.name}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Email</p>
+                      <p className="text-gray-600">{selectedFaculty.email}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Department</p>
+                      <p className="text-gray-600">{selectedFaculty.department}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Faculty Type</p>
+                      <p className="text-gray-600">{selectedFaculty.facultyType}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Status</p>
+                      <p className="text-gray-600">{selectedFaculty.status}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Position</p>
+                      <p className="text-gray-600">{selectedFaculty.position}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Admin Position</p>
+                      <p className="text-gray-600">{selectedFaculty.adminPosition}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Course Coordinator</p>
+                      <p className="text-gray-600">{selectedFaculty.courseCoordinator}</p>
+                    </div>
                   </div>
+
                   <h3 className="text-md font-semibold flex items-center gap-2 mb-2 text-gray-900">
                     <GraduationCap className="h-5 w-5 text-emerald-700" />
                     Nature of Load
                   </h3>
                   <div className="grid grid-cols-4 text-left text-sm mb-4">
-                    <div><p className="font-semibold">Teaching</p><p>—</p></div>
-                    <div><p className="font-semibold">Admin</p><p>—</p></div>
-                    <div><p className="font-semibold">Research</p><p>—</p></div>
-                    <div><p className="font-semibold">Faculty Units</p><p>—</p></div>
+                    <div>
+                      <p className="font-semibold">Teaching</p>
+                      <p>{selectedFaculty.loadTeaching.toFixed(1)}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Admin</p>
+                      <p>{selectedFaculty.loadAdmin.toFixed(1)}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Research</p>
+                      <p>{selectedFaculty.loadResearch.toFixed(1)}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Faculty Units</p>
+                      <p>{selectedFaculty.loadFacultyUnits.toFixed(1)}</p>
+                    </div>
                   </div>
                 </>
               )}
@@ -233,46 +427,45 @@ export default function CHAIR_FacultyManagement() {
               {activeModal === "schedule" && (
                 <>
                   <h2 className="text-lg font-semibold text-emerald-700 mb-6">Faculty Schedule</h2>
-                  {/* Example structure kept from OM; plug real data as needed */}
-                  {[
-                    {
-                      code: "CCPROG3",
-                      title: "Object-Oriented Programming",
-                      sections: [
-                        { id: "S11", slots: [{ day: "M", time: "7:30–9:00 AM", room: "ONLINE" }, { day: "H", time: "7:30–9:00 AM", room: "GK306A" }], mode: "HYBRID", students: 20 },
-                        { id: "S12", slots: [{ day: "S", time: "7:30–9:00 AM", room: "ONLINE" }, { day: "S", time: "9:15–10:45 AM", room: "ONLINE" }], mode: "FOL", students: 20 },
-                      ],
-                    },
-                  ].map((course) => (
-                    <div key={course.code} className="border rounded-xl p-4 mb-4">
-                      <h3 className="font-semibold text-emerald-700">{course.code}</h3>
-                      <p className="text-sm mb-3">{course.title}</p>
-                      <div className="grid gap-2">
-                        {course.sections.map((section) => (
-                          <div key={section.id} className="flex flex-wrap items-center justify-between rounded-lg px-3 py-2 text-sm bg-gray-50">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span className="font-semibold">{section.id}</span>
-                              {section.slots.map((slot, i) => (
-                                <div key={i} className="flex items-center gap-2 text-gray-600">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>{slot.day} {slot.time}</span>
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="h-3 w-3" /> {slot.room}
-                                  </span>
-                                </div>
+
+                  {/* Day-grouped tables (identical style/format to OM) */}
+                  <div className="space-y-6">
+                    {daySchedules.map(({ day, entries }) => (
+                      <div key={day} className="rounded-xl border border-gray-200 overflow-hidden">
+                        <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">
+                          {day}
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full text-sm">
+                            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide border-b">
+                              <tr>
+                                {["Course Code", "Section", "Campus", "Room", "Time"].map((h) => (
+                                  <th key={h} className="px-3 py-2 text-center font-medium whitespace-nowrap">
+                                    {h}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {entries.map((row, i) => (
+                                <tr
+                                  key={`${day}-${row.section}-${i}`}
+                                  className={cls(i % 2 === 0 ? "bg-white" : "bg-gray-50", "text-gray-800")}
+                                >
+                                  <td className="px-3 py-2 text-center">{row.code}</td>
+                                  <td className="px-3 py-2 text-center">{row.section}</td>
+                                  <td className="px-3 py-2 text-center">{row.campus}</td>
+                                  <td className="px-3 py-2 text-center">{row.room}</td>
+                                  <td className="px-3 py-2 text-center">{row.time}</td>
+                                </tr>
                               ))}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-800">{section.mode}</span>
-                              <span className="flex items-center gap-1 text-gray-600">
-                                <UsersIcon className="h-3 w-3" /> {section.students}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </>
               )}
 
@@ -286,7 +479,9 @@ export default function CHAIR_FacultyManagement() {
                         disabled={historyYearIndex === 0}
                         className={cls(
                           "px-3 py-1.5 rounded-lg text-sm font-medium border shadow-sm",
-                          historyYearIndex === 0 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700"
+                          historyYearIndex === 0
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white hover:bg-gray-50 text-gray-700"
                         )}
                       >
                         ← Previous
@@ -297,7 +492,9 @@ export default function CHAIR_FacultyManagement() {
                         disabled={historyYearIndex === YEARS.length - 1}
                         className={cls(
                           "px-3 py-1.5 rounded-lg text-sm font-medium border shadow-sm",
-                          historyYearIndex === YEARS.length - 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700"
+                          historyYearIndex === YEARS.length - 1
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white hover:bg-gray-50 text-gray-700"
                         )}
                       >
                         Next →
@@ -305,20 +502,34 @@ export default function CHAIR_FacultyManagement() {
                     </div>
 
                     {Object.entries({
-                      "Term 1": [{ code: "CCPROG3", section: "S11", units: 3, mode: "Hybrid", schedule: "MTH 7:30–9:00 AM" }],
+                      "Term 1": [
+                        { code: "CCPROG3", section: "S11", units: 3, mode: "Hybrid", schedule: "MTH 7:30–9:00 AM" },
+                        { code: "CSMODEL", section: "S12", units: 3, mode: "Online", schedule: "TF 10:00–11:30 AM" },
+                      ],
                       "Term 2": [{ code: "CBINTSY", section: "S14", units: 3, mode: "Hybrid", schedule: "MW 1:00–2:30 PM" }],
                       "Term 3": [{ code: "STCLOUD", section: "S16", units: 3, mode: "Hybrid", schedule: "TH 9:15–10:45 AM" }],
                     }).map(([term, rows]) => (
                       <div key={term} className="rounded-xl border border-gray-200 mb-6 overflow-hidden">
-                        <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">{term}</div>
+                        <div className="px-4 py-2 text-sm font-semibold text-emerald-700 bg-gray-50 border-b">
+                          {term}
+                        </div>
                         <div className="overflow-x-auto">
                           <table className="min-w-full text-sm">
                             <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide border-b">
-                              <tr>{["Course Code", "Section", "Units", "Mode", "Schedule"].map((h) => (<th key={h} className="px-3 py-2 text-center font-medium whitespace-nowrap">{h}</th>))}</tr>
+                              <tr>
+                                {["Course Code", "Section", "Units", "Mode", "Schedule"].map((h) => (
+                                  <th key={h} className="px-3 py-2 text-center font-medium whitespace-nowrap">
+                                    {h}
+                                  </th>
+                                ))}
+                              </tr>
                             </thead>
                             <tbody>
                               {rows.map((r, i) => (
-                                <tr key={`${term}-${i}`} className={cls("text-gray-700", i % 2 === 0 ? "bg-white" : "bg-gray-50")}>
+                                <tr
+                                  key={`${term}-${i}`}
+                                  className={cls("text-gray-700", i % 2 === 0 ? "bg-white" : "bg-gray-50")}
+                                >
                                   <td className="px-3 py-2 text-center">{r.code}</td>
                                   <td className="px-3 py-2 text-center">{r.section}</td>
                                   <td className="px-3 py-2 text-center">{r.units}</td>
@@ -336,7 +547,9 @@ export default function CHAIR_FacultyManagement() {
               )}
 
               <div className="flex justify-end mt-8">
-                <button onClick={closeModal} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">Close</button>
+                <button onClick={closeModal} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">
+                  Close
+                </button>
               </div>
             </div>
           </div>
