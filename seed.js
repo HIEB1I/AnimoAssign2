@@ -269,22 +269,22 @@
         { program_id: "PROG_BSIT", department_id: "DEPT_CCS", campus_id: "CAMP_TAFT", program_code: "BSIT", program_name: "BS Information Technology", is_active: true, created_at: "2024-09-01T00:00:00+08:00", updated_at: "2024-09-01T00:00:00+08:00" }
     ];
 
-    const preenlistment_count = [
-        { count_id: "PRCNT0001", code: "1", career: "GSD", acad_group: "CCS", campus: "MANILA", course_code: "DIT661D", count: 5, campus_id: "CMPS001", user_id: "USR005", term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-        { count_id: "PRCNT0002", code: "2", career: "GSD", acad_group: "CCS", campus: "MANILA", course_code: "DIT709D", count: 5, campus_id: "CMPS001", user_id: "USR005", term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-        { count_id: "PRCNT0003", code: "", career: "UGB", acad_group: "CCS", campus: "LAGUNA", course_code: "AD-FUND", count: 1, campus_id: "CMPS002", user_id: "USR006", term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-        { count_id: "PRCNT0004", code: "", career: "UGB", acad_group: "CCS", campus: "LAGUNA", course_code: "ADANI-1", count: 1, campus_id: "CMPS002", user_id: "USR006", term_id: "TERM_2025_T1", created_at: now, updated_at: now }
-      ];      
+  const preenlistment_count = [
+      { count_id: "PRCNT0001", code: "1", career: "GSD", acad_group: "CCS", campus: "MANILA", course_code: "DIT661D", count: 5, campus_id: "CMPS001", user_id: "USR005", term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { count_id: "PRCNT0002", code: "2", career: "GSD", acad_group: "CCS", campus: "MANILA", course_code: "DIT709D", count: 5, campus_id: "CMPS001", user_id: "USR005", term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { count_id: "PRCNT0003", code: "3", career: "UGB", acad_group: "CCS", campus: "LAGUNA", course_code: "AD-FUND", count: 1, campus_id: "CMPS002", user_id: "USR006", term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { count_id: "PRCNT0004", code: "4", career: "UGB", acad_group: "CCS", campus: "LAGUNA", course_code: "ADANI-1", count: 1, campus_id: "CMPS002", user_id: "USR006", term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now }
+    ];
   
     const preenlistment_statistics = [
-      { stat_id: "PRSTAT0001", program: "BSIS", freshman: 62, sophomore: 47, junior: 40, senior: 33, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0002", program: "BSIT", freshman: 138, sophomore: 94, junior: 149, senior: 108, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0003", program: "BSCS-CSE", freshman: 84, sophomore: 29, junior: 27, senior: 26, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0004", program: "BSCS-NIS", freshman: 126, sophomore: 52, junior: 62, senior: 56, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0005", program: "BSCS-ST", freshman: 227, sophomore: 250, junior: 261, senior: 270, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0006", program: "BSMS-CS", freshman: 11, sophomore: 12, junior: 28, senior: 36, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0007", program: "BS IET-AD", freshman: 19, sophomore: 17, junior: 15, senior: 35, term_id: "TERM_2025_T1", created_at: now, updated_at: now },
-      { stat_id: "PRSTAT0008", program: "BS IET-GD", freshman: 15, sophomore: 15, junior: 20, senior: 15, term_id: "TERM_2025_T1", created_at: now, updated_at: now }
+      { stat_id: "PRSTAT0001", program: "BSIS", freshman: 62, sophomore: 47, junior: 40, senior: 33, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0002", program: "BSIT", freshman: 138, sophomore: 94, junior: 149, senior: 108, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0003", program: "BSCS-CSE", freshman: 84, sophomore: 29, junior: 27, senior: 26, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0004", program: "BSCS-NIS", freshman: 126, sophomore: 52, junior: 62, senior: 56, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0005", program: "BSCS-ST", freshman: 227, sophomore: 250, junior: 261, senior: 270, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0006", program: "BSMS-CS", freshman: 11, sophomore: 12, junior: 28, senior: 36, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0007", program: "BS IET-AD", freshman: 19, sophomore: 17, junior: 15, senior: 35, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now },
+      { stat_id: "PRSTAT0008", program: "BS IET-GD", freshman: 15, sophomore: 15, junior: 20, senior: 15, term_id: "TERM_2025_T1", is_archived: false, created_at: now, updated_at: now }
     ];
   
   
