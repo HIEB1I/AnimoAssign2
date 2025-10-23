@@ -66,7 +66,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* Default: land on CHAIR Plantilla */}
-        <Route path="/" element={<Navigate to="/chair/plantilla" replace />} />
+        <Route path="/" element={<Navigate to="/om/load-assignment" replace />} />
 
         {/* -------- Chair -------- */}
         <Route path="/chair/plantilla" element={<CHAIR_Plantilla />} />
